@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { CheckCircle, TrendingUp, Check, GripVertical } from "lucide-react";
+import { CheckCircle, TrendingUp, Check, GripVertical, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { Reorder } from "framer-motion";
 
@@ -42,7 +42,13 @@ export default function DashboardPage() {
                     return;
                 }
 
-                setTasks(await taskRes.json());
+                const taskData = await taskRes.json();
+                // Sort: Pending (top) vs Completed (bottom)
+                setTasks(taskData.sort((a: any, b: any) => {
+                    if (a.status === "Pending" && b.status === "Completed") return -1;
+                    if (a.status === "Completed" && b.status === "Pending") return 1;
+                    return 0;
+                }));
             } catch (err) {
                 console.error(err);
                 router.push("/login");
@@ -102,9 +108,9 @@ export default function DashboardPage() {
             <header className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
                 <div className="flex-1">
                     <h1 className="text-3xl md:text-5xl font-black text-[#25343F] tracking-tight leading-tight">
-                        Hello, {profile.full_name?.split(' ')[0] || profile.email?.split('@')[0] || "Student"}!
+                        Hello, {profile.full_name?.split(' ')[0] || "Scholar"}!
                     </h1>
-                    <p className="text-[#BFC9D1] font-bold text-base md:text-lg mt-1">Ready to take the next step towards {profile.target_degree}?</p>
+                    <p className="text-[#BFC9D1] font-bold text-base md:text-lg mt-1 tracking-tight">Ready to take the next step towards your {profile.target_degree} in {profile.target_field}?</p>
                 </div>
             </header>
 
@@ -135,24 +141,60 @@ export default function DashboardPage() {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
-                {/* Profile Strength */}
-                <div className="bg-[#25343F] p-6 md:p-8 rounded-[1.5rem] md:rounded-[2rem] shadow-2xl flex flex-col justify-between border-t-4 border-[#FF9B51]">
-                    <div>
-                        <div className="flex items-center gap-3 mb-6">
-                            <div className="p-2.5 bg-[#FF9B51]/10 rounded-xl text-[#FF9B51]"><TrendingUp className="w-6 h-6" /></div>
-                            <h3 className="font-black text-[#EAEFEF] text-lg tracking-tight">Inference Insight</h3>
-                        </div>
-                        <div className="mb-4">
-                            <p className="text-[#FF9B51] font-black text-3xl md:text-4xl mb-1 uppercase tracking-tighter shrink-0 overflow-hidden text-ellipsis">Strong</p>
-                            <p className="text-[#BFC9D1] text-[10px] font-black uppercase tracking-[0.2em]">Candidate Score</p>
-                        </div>
-                        <p className="text-[#EAEFEF]/80 text-sm leading-relaxed font-bold">Our AI analysis indicates your academic profile is in the top tier for your field.</p>
+                {/* Profile Strength - AI Audit */}
+                <div className="md:col-span-1 bg-[#25343F] p-6 md:p-8 rounded-[1.5rem] md:rounded-[2rem] shadow-2xl flex flex-col border-t-4 border-[#FF9B51] relative overflow-hidden group">
+                    <div className="absolute top-0 right-0 p-6 opacity-5 group-hover:rotate-12 transition-transform">
+                        <TrendingUp className="w-24 h-24" />
                     </div>
+
+                    <div className="relative z-10">
+                        <div className="flex items-center gap-3 mb-6">
+                            <div className="p-2 bg-[#FF9B51]/10 rounded-xl text-[#FF9B51]"><Sparkles className="w-5 h-5" /></div>
+                            <h3 className="font-black text-[#EAEFEF] text-base tracking-tight uppercase tracking-widest">AI Profile Audit</h3>
+                        </div>
+
+                        <div className="space-y-6">
+                            <div className="flex justify-between items-end border-b border-white/10 pb-4">
+                                <div>
+                                    <p className="text-[9px] font-black text-[#BFC9D1] uppercase tracking-[0.2em] mb-1">Academics</p>
+                                    <h4 className="text-[#EAEFEF] font-black text-xl">
+                                        {profile.gpa > 3.5 || profile.gpa > 80 ? "Top Tier" : profile.gpa > 2.5 ? "Competitive" : "Average"}
+                                    </h4>
+                                </div>
+                                <div className={`w-3 h-3 rounded-full ${profile.gpa > 3.5 || profile.gpa > 80 ? "bg-green-500 shadow-[0_0_10px_rgba(34,197,94,0.5)]" : "bg-yellow-500"}`}></div>
+                            </div>
+
+                            <div className="flex justify-between items-end border-b border-white/10 pb-4">
+                                <div>
+                                    <p className="text-[9px] font-black text-[#BFC9D1] uppercase tracking-[0.2em] mb-1">Exams & Readiness</p>
+                                    <h4 className="text-[#EAEFEF] font-black text-xl">
+                                        {profile.test_scores?.length > 0 ? "Underway" : "Not Started"}
+                                    </h4>
+                                </div>
+                                <div className={`w-3 h-3 rounded-full ${profile.test_scores?.length > 0 ? "bg-blue-500 shadow-[0_0_10px_rgba(59,130,246,0.5)]" : "bg-red-500"}`}></div>
+                            </div>
+
+                            <div className="flex justify-between items-end border-b border-white/10 pb-4">
+                                <div>
+                                    <p className="text-[9px] font-black text-[#BFC9D1] uppercase tracking-[0.2em] mb-1">SOP Status</p>
+                                    <h4 className="text-[#EAEFEF] font-black text-xl">{profile.sop_status || "Pending"}</h4>
+                                </div>
+                                <div className={`w-3 h-3 rounded-full ${profile.sop_status === 'Ready' ? "bg-green-500 shadow-[0_0_10px_rgba(34,197,94,0.5)]" : "bg-orange-500 animate-pulse"}`}></div>
+                            </div>
+                        </div>
+
+                        {profile.ai_feedback && (
+                            <p className="mt-8 text-[#BFC9D1] text-[11px] font-bold leading-relaxed italic border-l-2 border-[#FF9B51] pl-4">
+                                "{profile.ai_feedback}"
+                            </p>
+                        )}
+                    </div>
+
                     <button
                         onClick={handleProfileScan}
-                        className="mt-8 py-3.5 bg-white/5 text-[#EAEFEF] border border-white/10 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] hover:bg-[#FF9B51] hover:text-[#25343F] transition-all"
+                        className="mt-8 py-4 bg-white/5 text-[#EAEFEF] border border-white/10 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] hover:bg-[#FF9B51] hover:text-[#25343F] transition-all group-hover:scale-[1.02]"
                     >
-                        {loading ? "SCANNING..." : "Profile Scan"}
+                        {loading ? "SCANNING ENGINE..." : "RUN FULL AI ANALYSIS"}
                     </button>
                 </div>
 
@@ -183,44 +225,46 @@ export default function DashboardPage() {
                                 </button>
                             </div>
                         ) : (
-                            <Reorder.Group axis="y" values={tasks} onReorder={handleReorder} className="space-y-3">
-                                {tasks.map((task) => (
-                                    <Reorder.Item
-                                        key={task.id}
-                                        value={task}
-                                        className="flex items-center justify-between p-4 bg-[#EAEFEF]/50 rounded-2xl hover:bg-[#EAEFEF] transition-all border border-transparent hover:border-[#BFC9D1]/20 group cursor-grab active:cursor-grabbing"
-                                    >
-                                        <div className="flex items-center gap-4 flex-1">
-                                            <button
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    handleToggleTask(task.id);
-                                                }}
-                                                className={`w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-all shrink-0 ${task.status === "Completed"
-                                                    ? "bg-[#FF9B51] border-[#FF9B51] text-[#25343F]"
-                                                    : "border-[#BFC9D1] hover:border-[#FF9B51] bg-white shadow-sm"
-                                                    }`}
-                                            >
-                                                {task.status === "Completed" && <Check className="w-4 h-4 stroke-[4px]" />}
-                                            </button>
-                                            <div className="min-w-0 flex-1">
-                                                <p className={`font-black text-sm tracking-tight leading-snug break-words ${task.status === "Completed" ? "text-[#BFC9D1] line-through" : "text-[#25343F]"}`}>
-                                                    {task.title}
-                                                </p>
-                                                <div className="flex items-center gap-2 mt-1">
-                                                    <span className={`text-[8px] md:text-[9px] font-black uppercase tracking-widest leading-none ${task.is_auto_generated ? "text-[#FF9B51]" : "text-[#BFC9D1]"
-                                                        }`}>
-                                                        {task.is_auto_generated ? "⚡ AI Generated" : "User Task"}
-                                                    </span>
+                            <div className="max-h-[380px] md:max-h-[440px] overflow-y-auto pr-2 custom-scrollbar">
+                                <Reorder.Group axis="y" values={tasks} onReorder={handleReorder} className="space-y-3">
+                                    {tasks.map((task) => (
+                                        <Reorder.Item
+                                            key={task.id}
+                                            value={task}
+                                            className="flex items-center justify-between p-4 bg-[#EAEFEF]/50 rounded-2xl hover:bg-[#EAEFEF] transition-all border border-transparent hover:border-[#BFC9D1]/20 group cursor-grab active:cursor-grabbing"
+                                        >
+                                            <div className="flex items-center gap-4 flex-1">
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        handleToggleTask(task.id);
+                                                    }}
+                                                    className={`w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-all shrink-0 ${task.status === "Completed"
+                                                        ? "bg-[#FF9B51] border-[#FF9B51] text-[#25343F]"
+                                                        : "border-[#BFC9D1] hover:border-[#FF9B51] bg-white shadow-sm"
+                                                        }`}
+                                                >
+                                                    {task.status === "Completed" && <Check className="w-4 h-4 stroke-[4px]" />}
+                                                </button>
+                                                <div className="min-w-0 flex-1">
+                                                    <p className={`font-black text-sm tracking-tight leading-snug break-words ${task.status === "Completed" ? "text-[#BFC9D1] line-through" : "text-[#25343F]"}`}>
+                                                        {task.title}
+                                                    </p>
+                                                    <div className="flex items-center gap-2 mt-1">
+                                                        <span className={`text-[8px] md:text-[9px] font-black uppercase tracking-widest leading-none ${task.is_auto_generated ? "text-[#FF9B51]" : "text-[#BFC9D1]"
+                                                            }`}>
+                                                            {task.is_auto_generated ? "⚡ AI Generated" : "User Task"}
+                                                        </span>
+                                                    </div>
                                                 </div>
                                             </div>
-                                        </div>
-                                        <div className="text-[#BFC9D1] group-hover:text-[#25343F] transition-colors ml-4">
-                                            <GripVertical className="w-5 h-5" />
-                                        </div>
-                                    </Reorder.Item>
-                                ))}
-                            </Reorder.Group>
+                                            <div className="text-[#BFC9D1] group-hover:text-[#25343F] transition-colors ml-4">
+                                                <GripVertical className="w-5 h-5" />
+                                            </div>
+                                        </Reorder.Item>
+                                    ))}
+                                </Reorder.Group>
+                            </div>
                         )}
                     </div>
                 </div>

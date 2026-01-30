@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
-import { CheckCircle, ChevronRight, ChevronLeft, GraduationCap, Globe, Wallet, ClipboardCheck, Check } from "lucide-react";
+import { CheckCircle, ChevronRight, ChevronLeft, GraduationCap, Globe, Wallet, ClipboardCheck, Check, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 
 const STEPS = ["Academic Background", "Study Goal", "Budget & Funding", "Readiness"];

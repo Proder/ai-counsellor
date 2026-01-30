@@ -1,7 +1,7 @@
 "use client";
 
 import { Sidebar } from "@/components/dashboard/Sidebar";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Menu, X, MessageSquare } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -12,7 +12,25 @@ export default function DashboardLayout({
     children: React.ReactNode;
 }) {
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+    const [profile, setProfile] = useState<any>(null);
     const pathname = usePathname();
+
+    useEffect(() => {
+        const userId = localStorage.getItem("user_id");
+        if (!userId) {
+            window.location.href = "/login";
+            return;
+        }
+
+        fetch(`/api/profile/${userId}`)
+            .then(res => res.json())
+            .then(data => {
+                setProfile(data);
+                if (!data.onboarding_completed) {
+                    window.location.href = "/onboarding";
+                }
+            });
+    }, [pathname]);
 
     // Hide floating button on the chat page itself
     const showFloatingButton = pathname !== "/chat";
@@ -38,7 +56,7 @@ export default function DashboardLayout({
                 />
             )}
 
-            <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
+            <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} onboardingCompleted={profile?.onboarding_completed} />
 
             <main className="lg:ml-64 p-4 md:p-8 lg:p-12 min-h-screen overflow-x-hidden">
                 {children}

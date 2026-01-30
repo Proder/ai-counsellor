@@ -10,14 +10,16 @@ const LINKS = [
     { name: "My Shortlist", href: "/shortlist", icon: List },
     { name: "AI Counsellor", href: "/chat", icon: MessageSquare },
     { name: "Applications", href: "/applications", icon: BookOpen },
+    { name: "Profile", href: "/profile", icon: Settings },
 ];
 
 interface SidebarProps {
     isOpen: boolean;
     onClose: () => void;
+    onboardingCompleted?: boolean;
 }
 
-export function Sidebar({ isOpen, onClose }: SidebarProps) {
+export function Sidebar({ isOpen, onClose, onboardingCompleted = true }: SidebarProps) {
     const pathname = usePathname();
 
     return (
@@ -38,18 +40,24 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                 {LINKS.map((link) => {
                     const Icon = link.icon;
                     const isActive = pathname === link.href;
+                    const isLocked = !onboardingCompleted && link.href !== "/dashboard" && link.href !== "/profile";
+
                     return (
                         <Link
                             key={link.href}
-                            href={link.href}
-                            onClick={onClose}
+                            href={isLocked ? "#" : link.href}
+                            onClick={(e) => {
+                                if (isLocked) e.preventDefault();
+                                onClose();
+                            }}
                             className={`flex items-center gap-4 px-5 py-3.5 rounded-2xl text-sm font-bold transition-all ${isActive
                                 ? "bg-[#FF9B51] text-[#25343F] shadow-lg shadow-[#FF9B51]/20 scale-[1.02]"
                                 : "text-[#BFC9D1] hover:bg-[#EAEFEF]/5 hover:text-[#EAEFEF]"
-                                }`}
+                                } ${isLocked ? "opacity-30 cursor-not-allowed" : ""}`}
                         >
                             <Icon className={`w-5 h-5 ${isActive ? "text-[#25343F]" : "text-[#BFC9D1]"}`} />
-                            {link.name}
+                            <span className="flex-1">{link.name}</span>
+                            {isLocked && <X className="w-3 h-3 text-[#BFC9D1]" />}
                         </Link>
                     );
                 })}

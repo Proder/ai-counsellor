@@ -29,6 +29,22 @@ export default function ShortlistPage() {
         fetchShortlist();
     };
 
+    const executeUnlock = async (id: number) => {
+        await fetch(`/api/universities/unlock/${id}`, { method: "POST" });
+        toast.info("Admission track reset. You can now explore other institutions.");
+        fetchShortlist();
+    };
+
+    const handleUnlock = (id: number) => {
+        toast("Reverse Commitment?", {
+            description: "Unlocking will reset your application progress for this university. Are you sure?",
+            action: {
+                label: "Unlock Now",
+                onClick: () => executeUnlock(id),
+            },
+        });
+    };
+
     const handleLock = (id: number) => {
         toast("Permanent Commitment", {
             description: "Locking will commit you to this university and unlock application guides.",
@@ -90,10 +106,10 @@ export default function ShortlistPage() {
                             <div className="mt-6 md:mt-0 flex gap-4 w-full md:w-auto">
                                 {item.is_locked ? (
                                     <button
-                                        disabled
-                                        className="w-full md:w-auto px-8 py-4 bg-[#FF9B51] text-[#25343F] rounded-xl font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2"
+                                        onClick={() => handleUnlock(item.id)}
+                                        className="w-full md:w-auto px-8 py-4 bg-[#FF9B51] text-[#25343F] rounded-xl font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-red-500 hover:text-white transition-all shadow-lg"
                                     >
-                                        <Lock className="w-4 h-4" /> LOCKED
+                                        <Lock className="w-4 h-4" /> UNLOCK
                                     </button>
                                 ) : (
                                     <button
