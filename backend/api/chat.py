@@ -15,7 +15,7 @@ def get_chat_history(user_id: int, db: Session = Depends(database.get_db)):
     messages = db.query(models.ChatMessage).filter(models.ChatMessage.user_id == user_id).order_by(models.ChatMessage.created_at.asc()).all()
     return messages
 
-@router.post("/")
+@router.post("")
 async def chat_with_counsellor(request: ChatRequest, db: Session = Depends(database.get_db)):
     # 1. Fetch user data for deep context with relationships
     profile = db.query(models.Profile).filter(models.Profile.user_id == request.user_id).first()

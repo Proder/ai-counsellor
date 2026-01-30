@@ -9,7 +9,7 @@ load_dotenv()
 
 models.Base.metadata.create_all(bind=database.engine)
 
-app = FastAPI(title="AI Counsellor API")
+app = FastAPI(title="AI Counsellor API", redirect_slashes=False)
 
 # Configurable CORS origins for production
 allowed_origins = os.getenv("ALLOWED_ORIGINS", "http://localhost:3000").split(",")
