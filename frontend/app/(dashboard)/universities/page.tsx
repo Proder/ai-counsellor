@@ -8,7 +8,7 @@ import { toast } from "sonner";
 
 export default function UniversitiesPage() {
     const router = useRouter();
-    const [view, setView] = useState<"search" | "recommend">("search");
+    const [view, setView] = useState<"search" | "recommend">("recommend");
     const [query, setQuery] = useState("");
     const [results, setResults] = useState<any[]>([]);
     const [recommendations, setRecommendations] = useState<any>(null);
@@ -223,37 +223,74 @@ export default function UniversitiesPage() {
                     )}
 
                     {recommendations && (
-                        <>
-                            {/* Dream */}
-                            <div className="space-y-4">
-                                <h3 className="flex items-center gap-3 text-xl font-black text-[#25343F] uppercase tracking-tighter">
-                                    Dream / Reach
-                                </h3>
-                                <div className="grid grid-cols-1 gap-4">
+                        <div className="space-y-16">
+                            {/* Dream Section */}
+                            <section className="relative group/section">
+                                <div className="absolute -left-4 top-0 bottom-0 w-1.5 bg-purple-500 rounded-full opacity-0 group-hover/section:opacity-100 transition-opacity hidden md:block" />
+                                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+                                    <div className="flex items-center gap-4">
+                                        <div>
+                                            <h3 className="text-2xl font-black text-[#25343F] uppercase tracking-tighter leading-none">
+                                                Dream / Reach
+                                            </h3>
+                                            <p className="text-[10px] font-black text-purple-500 uppercase tracking-widest mt-1 opacity-70">Low probability, high reward</p>
+                                        </div>
+                                    </div>
+                                    <div className="h-px flex-1 bg-purple-500/10 hidden md:block mx-6" />
+                                    <span className="px-4 py-1.5 bg-purple-500/5 text-purple-600 rounded-full text-[10px] font-black uppercase tracking-widest border border-purple-500/10">
+                                        {recommendations.Dream.length} Matches
+                                    </span>
+                                </div>
+                                <div className="grid grid-cols-1 gap-6">
                                     {recommendations.Dream.map((uni: any) => <UniversityCard key={uni.id} uni={uni} category="Dream" />)}
                                 </div>
-                            </div>
+                            </section>
 
-                            {/* Target */}
-                            <div className="space-y-4">
-                                <h3 className="flex items-center gap-3 text-xl font-black text-[#25343F] uppercase tracking-tighter">
-                                    Target Match
-                                </h3>
-                                <div className="grid grid-cols-1 gap-4">
+                            {/* Target Section */}
+                            <section className="relative group/section">
+                                <div className="absolute -left-4 top-0 bottom-0 w-1.5 bg-blue-500 rounded-full opacity-0 group-hover/section:opacity-100 transition-opacity hidden md:block" />
+                                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+                                    <div className="flex items-center gap-4">
+
+                                        <div>
+                                            <h3 className="text-2xl font-black text-[#25343F] uppercase tracking-tighter leading-none">
+                                                Target Match
+                                            </h3>
+                                            <p className="text-[10px] font-black text-blue-500 uppercase tracking-widest mt-1 opacity-70">Balanced probability</p>
+                                        </div>
+                                    </div>
+                                    <div className="h-px flex-1 bg-blue-500/10 hidden md:block mx-6" />
+                                    <span className="px-4 py-1.5 bg-blue-500/5 text-blue-600 rounded-full text-[10px] font-black uppercase tracking-widest border border-blue-500/10">
+                                        {recommendations.Target.length} Matches
+                                    </span>
+                                </div>
+                                <div className="grid grid-cols-1 gap-6">
                                     {recommendations.Target.map((uni: any) => <UniversityCard key={uni.id} uni={uni} category="Target" />)}
                                 </div>
-                            </div>
+                            </section>
 
-                            {/* Safe */}
-                            <div className="space-y-4">
-                                <h3 className="flex items-center gap-3 text-xl font-black text-[#25343F] uppercase tracking-tighter">
-                                    Safety / Backup
-                                </h3>
-                                <div className="grid grid-cols-1 gap-4">
+                            {/* Safe Section */}
+                            <section className="relative group/section">
+                                <div className="absolute -left-4 top-0 bottom-0 w-1.5 bg-green-500 rounded-full opacity-0 group-hover/section:opacity-100 transition-opacity hidden md:block" />
+                                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+                                    <div className="flex items-center gap-4">
+                                        <div>
+                                            <h3 className="text-2xl font-black text-[#25343F] uppercase tracking-tighter leading-none">
+                                                Safety / Backup
+                                            </h3>
+                                            <p className="text-[10px] font-black text-green-500 uppercase tracking-widest mt-1 opacity-70">High probability</p>
+                                        </div>
+                                    </div>
+                                    <div className="h-px flex-1 bg-green-500/10 hidden md:block mx-6" />
+                                    <span className="px-4 py-1.5 bg-green-500/5 text-green-600 rounded-full text-[10px] font-black uppercase tracking-widest border border-green-500/10">
+                                        {recommendations.Safe.length} Matches
+                                    </span>
+                                </div>
+                                <div className="grid grid-cols-1 gap-6">
                                     {recommendations.Safe.map((uni: any) => <UniversityCard key={uni.id} uni={uni} category="Safe" />)}
                                 </div>
-                            </div>
-                        </>
+                            </section>
+                        </div>
                     )}
                 </div>
             )}

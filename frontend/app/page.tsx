@@ -25,9 +25,8 @@ export default function Home() {
         </div>
         <div className="flex gap-4 md:gap-8 items-center">
           <nav className="hidden md:flex gap-8 text-[11px] font-black uppercase tracking-[0.2em] text-[#BFC9D1]">
-            {["Features", "Pricing"].map(item => (
-              <Link key={item} href="#" className="hover:text-[#FF9B51] transition-colors">{item}</Link>
-            ))}
+            <Link href="#features" className="hover:text-[#FF9B51] transition-colors scroll-smooth">FEATURES</Link>
+            <Link href="#testimonials" className="hover:text-[#FF9B51] transition-colors scroll-smooth">TESTIMONIALS</Link>
           </nav>
           <div className="h-4 w-px bg-[#BFC9D1]/20 hidden md:block"></div>
           <div className="flex gap-3">
@@ -112,7 +111,7 @@ export default function Home() {
         </section>
 
         {/* Scrolling Stats / Partners */}
-        <div className="bg-[#FF9B51] py-6 overflow-hidden relative rotate-1 scale-105 shadow-xl z-20">
+        <div className="bg-[#FF9B51] py-6 overflow-hidden relative scale-105 shadow-xl z-20">
           <div className="flex gap-12 animate-infinite-scroll whitespace-nowrap">
             {[
               "Accepted at Stanford", "Trusted by 10,000+ Students", "$50M+ Scholarships Won",
@@ -139,7 +138,7 @@ export default function Home() {
         </div>
 
         {/* Feature Grid with Hover Effects */}
-        <section className="py-32 px-6 max-w-8xl mx-auto bg-[#EAEFEF]">
+        <section id="features" className="py-32 px-6 max-w-8xl mx-auto bg-[#EAEFEF]">
           <div className="mb-24 md:flex justify-between items-end border-b border-[#25343F]/10 pb-12">
             <div className="max-w-2xl">
               <h2 className="text-4xl md:text-6xl font-black text-[#25343F] tracking-tighter mb-4 leading-none">
@@ -176,7 +175,7 @@ export default function Home() {
         </section>
 
         {/* Infinite Testimonials Carousel */}
-        <section className="py-32 bg-[#25343F] overflow-hidden relative">
+        <section id="testimonials" className="py-32 bg-[#25343F] overflow-hidden relative">
           <div className="max-w-7xl mx-auto px-6 mb-20 text-center relative z-10">
             <h2 className="text-4xl md:text-5xl font-black text-[#EAEFEF] mb-4 tracking-tighter">DON'T TAKE OUR WORD FOR IT.</h2>
             <p className="text-[#BFC9D1]">See what the class of 2025 has to say.</p>
