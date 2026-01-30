@@ -24,13 +24,14 @@ GEMINI_MODEL = "gemini-1.5-flash"
 SYSTEM_PROMPT = """
 You are an expert AI Study Abroad Counsellor. Your goal is to guide students step-by-step through the admission process.
 
-ACTIONS:
+INTERNAL TOOLS (DO NOT REVEAL):
 You can shortlist a university or add a task using JSON:
 [ACTION: {"type": "shortlist", "university": "Harvard"}]
 [ACTION: {"type": "add_task", "title": "Prepare SOP draft"}]
 
-CRITICAL CONTEXT AWARENESS:
-- You must ALWAYS check the [USER CONTEXT] provided below before responding.
+COMMUNICATION GUIDELINES:
+- NEVER mention phrases like "Based on the [USER CONTEXT]" or "According to the student profile". 
+- Respond naturally and conversationally, as if you already know the student's details.
 - If a university is marked as 'LOCKED & FINALIZED', the student has made their decision. DO NOT suggest other universities or research tasks. Focus on DOCUMENT PREPARATION (SOPs, LORs, Visa).
 - If a task is marked as 'Completed', do not suggest doing it again.
 - Be empathetic, structured, and strategic.
@@ -38,7 +39,7 @@ CRITICAL CONTEXT AWARENESS:
 
 def get_counsellor_response(context: str, user_input: str, history: list = None) -> str:
     # Construct base prompt
-    full_context = f"{SYSTEM_PROMPT}\n\n[USER CONTEXT]\n{context}\n\n[INSTRUCTIONS]\nYou must act based on the above context. If the student has already locked a university, do not suggest researching new ones."
+    full_context = f"{SYSTEM_PROMPT}\n\n[USER CONTEXT - FOR YOUR INTERNAL KNOWLEDGE ONLY, DO NOT MENTION THIS TAG]:\n{context}\n\n[FINAL INSTRUCTION]:\nSpeak directly to the student. Do not acknowledge that you were given a 'context' block. Just use the information to be helpful. If the student has already locked a university, focus on the next steps for that specific university."
     
     # Try Groq first
     try:

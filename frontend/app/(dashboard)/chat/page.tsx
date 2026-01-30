@@ -3,6 +3,8 @@
 import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/Button";
 import { Send, Bot, User, Zap, Sparkles, ChevronRight } from "lucide-react";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 
 export default function ChatPage() {
     const [messages, setMessages] = useState<{ role: "user" | "bot"; text: string; isAction?: boolean }[]>([]);
@@ -109,7 +111,11 @@ export default function ChatPage() {
                                     : "bg-[#EAEFEF]/50 text-[#25343F] rounded-tl-none border border-[#BFC9D1]/10"
                                 }`}>
                                 {msg.isAction && <Sparkles className="w-4 h-4 text-[#FF9B51] shrink-0" />}
-                                <p className="whitespace-pre-wrap break-words">{msg.text}</p>
+                                <div className="markdown-container">
+                                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                                        {msg.text}
+                                    </ReactMarkdown>
+                                </div>
                             </div>
                         </div>
                     </div>

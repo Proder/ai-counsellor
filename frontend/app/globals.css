@@ -35,3 +35,33 @@ body {
 .bg-dark { background-color: #25343F; }
 .bg-light { background-color: #EAEFEF; }
 .border-muted { border-color: var(--muted); }
+
+.markdown-container ul {
+  list-style-type: disc;
+  margin-left: 1.5rem;
+  margin-top: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.markdown-container ol {
+  list-style-type: decimal;
+  margin-left: 1.5rem;
+  margin-top: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.markdown-container li {
+  margin-bottom: 0.25rem;
+}
+
+.markdown-container p {
+  margin-bottom: 0.75rem;
+}
+
+.markdown-container p:last-child {
+  margin-bottom: 0;
+}
+
+.markdown-container strong {
+  font-weight: 800;
+}
