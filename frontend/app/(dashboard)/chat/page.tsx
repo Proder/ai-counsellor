@@ -53,7 +53,7 @@ export default function ChatPage() {
 
         try {
             const userId = localStorage.getItem("user_id");
-            const res = await fetch("/api/chat/", {
+            const res = await fetch("/api/chat", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ user_id: parseInt(userId || "0"), message: userMsg }),
