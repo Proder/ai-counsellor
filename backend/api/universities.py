@@ -7,8 +7,14 @@ from pydantic import BaseModel
 
 router = APIRouter()
 
+from services.university_service import search_universities, get_ai_recommendations
+
 @router.get("")
-async def get_universities(query: str = "", db: Session = Depends(database.get_db)):
+async def get_universities(query: str = "", recommend: bool = False, db: Session = Depends(database.get_db)):
+    if recommend:
+        # In a real app we would pass the user profile here
+        return {"recommendations": get_ai_recommendations({})}
+
     # In a real app we might cache or store in DB first
     results = search_universities(query)
     return {"results": results}

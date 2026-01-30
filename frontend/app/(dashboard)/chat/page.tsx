@@ -2,8 +2,7 @@
 
 import { useState, useRef, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
-import { Button } from "@/components/ui/Button";
-import { Send, Bot, User, Zap, Sparkles, ChevronRight, Mic, FileUp, Info } from "lucide-react";
+import { Bot, User, Sparkles, Mic, FileUp, Zap, Send } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 
@@ -15,6 +14,7 @@ function ChatContent() {
     const [loading, setLoading] = useState(false);
     const scrollRef = useRef<HTMLDivElement>(null);
 
+    // Initial History Fetch
     useEffect(() => {
         const fetchHistory = async () => {
             const userId = localStorage.getItem("user_id");
@@ -42,17 +42,18 @@ function ChatContent() {
         fetchHistory();
     }, [mode]);
 
+    // Scroll to bottom
     useEffect(() => {
         if (scrollRef.current) {
             scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
         }
-    }, [messages]);
+    }, [messages, loading]);
 
-    const handleSend = async () => {
-        if (!input.trim()) return;
+    const handleSend = async (overrideInput?: string) => {
+        const msgToSend = overrideInput || input;
+        if (!msgToSend.trim()) return;
 
-        const userMsg = input;
-        setMessages(prev => [...prev, { role: "user", content: userMsg }]);
+        setMessages(prev => [...prev, { role: "user", content: msgToSend }]);
         setInput("");
         setLoading(true);
 
@@ -61,8 +62,10 @@ function ChatContent() {
             const res = await fetch("/api/chat", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ user_id: parseInt(userId || "0"), message: userMsg }),
+                body: JSON.stringify({ user_id: parseInt(userId || "0"), message: msgToSend }),
             });
+
+            if (!res.ok) throw new Error("Network error");
 
             const data = await res.json();
             setMessages(prev => [...prev, { role: "assistant", content: data.response }]);
@@ -73,18 +76,28 @@ function ChatContent() {
                 });
             }
         } catch (e) {
-            setMessages(prev => [...prev, { role: "assistant", content: "Sorry, I encountered an inference error. Please try again." }]);
+            setMessages(prev => [...prev, { role: "assistant", content: "Sorry, I encountered a network error. Let's try again." }]);
         } finally {
             setLoading(false);
         }
     };
 
     return (
-        <div className="flex flex-col h-[calc(100vh-140px)] md:h-[calc(100vh-120px)] bg-white rounded-2xl md:rounded-[2.5rem] shadow-2xl border border-[#BFC9D1]/20 overflow-hidden">
+        <div className="flex flex-col h-[calc(100vh-140px)] md:h-[calc(100vh-120px)] bg-white rounded-2xl md:rounded-[2.5rem] shadow-2xl border border-[#BFC9D1]/20 overflow-hidden relative">
+
+            {/* Thinking Overlay */}
+            {loading && !messages.length && (
+                <div className="absolute inset-0 bg-white/50 backdrop-blur-sm z-50 flex items-center justify-center">
+                    <div className="animate-bounce">
+                        <Bot className="w-12 h-12 text-[#FF9B51]" />
+                    </div>
+                </div>
+            )}
+
             {/* Chat Header */}
-            <div className="p-4 md:p-6 border-b border-[#BFC9D1]/10 bg-[#25343F] text-[#EAEFEF] flex justify-between items-center shrink-0">
+            <div className={`p-4 md:p-6 border-b border-[#BFC9D1]/10 bg-[#25343F] text-[#EAEFEF] transition-all duration-500 flex justify-between items-center shrink-0`}>
                 <div className="flex items-center gap-3 md:gap-4">
-                    <div className="bg-[#FF9B51] p-2 md:p-2.5 rounded-lg md:rounded-xl text-[#25343F] shrink-0">
+                    <div className={`p-2 md:p-2.5 rounded-lg md:rounded-xl shrink-0 bg-[#FF9B51] text-[#25343F]`}>
                         <Bot className="w-5 h-5 md:w-6 md:h-6" />
                     </div>
                     <div className="min-w-0">
@@ -105,10 +118,6 @@ function ChatContent() {
                         <div className="absolute top-12 left-1/2 -translate-x-1/2 bg-[#FF9B51] text-[#25343F] text-[10px] font-black py-2 px-4 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-50 shadow-2xl pointer-events-none border-b-2 border-[#25343F]/20">
                             DOC SCANNER COMING SOON!
                         </div>
-                    </div>
-                    <div className="flex items-center gap-2 px-3 py-1.5 bg-[#FF9B51] rounded-full shadow-lg">
-                        <Zap className="w-3 h-3 text-[#25343F]" />
-                        <span className="text-[8px] font-black uppercase tracking-widest text-[#25343F]">Fast Latency</span>
                     </div>
                 </div>
             </div>
@@ -163,6 +172,7 @@ function ChatContent() {
                         </div>
                     </div>
                 ))}
+
                 {loading && (
                     <div className="flex justify-start">
                         <div className="flex gap-3 md:gap-4 items-center">
@@ -170,7 +180,7 @@ function ChatContent() {
                                 <Bot className="w-4 h-4 md:w-5 md:h-5 animate-bounce" />
                             </div>
                             <div className="bg-[#EAEFEF]/50 text-[#BFC9D1] px-5 py-2.5 rounded-xl font-black text-[9px] md:text-[10px] uppercase tracking-widest animate-pulse border border-[#BFC9D1]/10">
-                                Running Inference...
+                                Thinking...
                             </div>
                         </div>
                     </div>
@@ -182,28 +192,33 @@ function ChatContent() {
                 <div className="flex gap-2 md:gap-3 relative">
                     <input
                         className="flex-1 px-5 md:px-8 py-4 md:py-5 bg-white border-2 border-[#BFC9D1]/20 rounded-xl md:rounded-2xl font-bold text-xs md:text-sm text-[#25343F] placeholder-[#BFC9D1]/50 focus:border-[#25343F] outline-none transition-all shadow-inner min-w-0"
-                        placeholder="Ask anything..."
+                        placeholder="Ask me anything..."
                         value={input}
                         onChange={(e) => setInput(e.target.value)}
                         onKeyDown={(e) => e.key === "Enter" && handleSend()}
                         disabled={loading}
                     />
+
                     <button
-                        onClick={handleSend}
+                        onClick={() => handleSend()}
                         disabled={loading}
                         className="px-6 md:px-8 bg-[#25343F] text-[#EAEFEF] rounded-xl md:rounded-2xl hover:scale-105 active:scale-95 transition-all shadow-xl flex items-center justify-center group shrink-0"
                     >
                         <Send className="w-5 h-5 md:w-6 md:h-6 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform text-[#FF9B51]" />
                     </button>
                 </div>
-                <div className="mt-4 flex flex-wrap justify-center gap-3 md:gap-6 overflow-hidden">
-                    {["Shortlist", "GPA Review", "Application Help"].map((hint, i) => (
+
+                {/* Suggestions */}
+                <div className="mt-4 flex flex-wrap justify-center gap-3 md:gap-5 overflow-hidden">
+                    {["Shortlist", "SOP Review", "Application Timeline", "Visa Help"].map((hint, i) => (
                         <button
                             key={i}
-                            onClick={() => setInput(hint)}
-                            className="text-[9px] md:text-[10px] font-black uppercase tracking-widest text-[#BFC9D1] hover:text-[#25343F] flex items-center gap-1 transition-colors whitespace-nowrap"
+                            onClick={() => {
+                                setInput(hint);
+                                handleSend(hint);
+                            }}
+                            className="px-3 py-1.5 bg-white border border-[#BFC9D1]/30 rounded-lg text-[9px] md:text-[10px] font-black uppercase tracking-widest text-[#BFC9D1] hover:text-[#25343F] hover:border-[#FF9B51] transition-all whitespace-nowrap shadow-sm"
                         >
-                            <ChevronRight className="w-3 h-3 text-[#FF9B51]" />
                             {hint}
                         </button>
                     ))}

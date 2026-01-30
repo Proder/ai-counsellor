@@ -67,7 +67,7 @@ export function Sidebar({ isOpen, onClose, onboardingCompleted = true }: Sidebar
                 <button
                     onClick={() => {
                         localStorage.removeItem("user_id");
-                        window.location.href = "/login";
+                        window.location.href = "/";
                     }}
                     className="flex items-center gap-4 px-5 py-3.5 rounded-2xl text-sm font-bold text-[#BFC9D1] hover:text-[#FF9B51] hover:bg-[#FF9B51]/10 w-full transition-all"
                 >

@@ -61,10 +61,10 @@ export default function ProfilePage() {
 
     return (
         <div className="max-w-4xl mx-auto space-y-8 md:space-y-12 pb-24 px-1">
-            <header className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
+            <header className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 mt-6 md:mt-0">
                 <div>
                     <h1 className="text-3xl md:text-5xl font-black text-[#25343F] tracking-tight leading-tight">Profile Settings</h1>
-                    <p className="text-[#BFC9D1] font-bold text-base md:text-lg mt-2">Manage your academic profile and study goals.</p>
+                    <p className="text-[#25343F]/70 font-bold text-base md:text-lg mt-2">Manage your academic profile and study goals.</p>
                 </div>
                 <button
                     onClick={handleSave}

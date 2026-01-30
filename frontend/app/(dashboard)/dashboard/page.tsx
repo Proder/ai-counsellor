@@ -105,12 +105,12 @@ export default function DashboardPage() {
 
     return (
         <div className="max-w-5xl mx-auto animate-in fade-in zoom-in duration-500 space-y-6 md:space-y-8 pb-12 overflow-x-hidden">
-            <header className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
+            <header className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 mt-6 md:mt-0">
                 <div className="flex-1">
                     <h1 className="text-3xl md:text-5xl font-black text-[#25343F] tracking-tight leading-tight">
                         Hello, {profile.full_name?.split(' ')[0] || "Scholar"}!
                     </h1>
-                    <p className="text-[#BFC9D1] font-bold text-base md:text-lg mt-1 tracking-tight">Ready to take the next step towards your {profile.target_degree} in {profile.target_field}?</p>
+                    <p className="text-[#25343F]/70 font-bold text-base md:text-lg mt-1 tracking-tight">Ready to take the next step towards your {profile.target_degree} in {profile.target_field}?</p>
                 </div>
             </header>
 
@@ -149,7 +149,6 @@ export default function DashboardPage() {
 
                     <div className="relative z-10">
                         <div className="flex items-center gap-3 mb-6">
-                            <div className="p-2 bg-[#FF9B51]/10 rounded-xl text-[#FF9B51]"><Sparkles className="w-5 h-5" /></div>
                             <h3 className="font-black text-[#EAEFEF] text-base tracking-tight uppercase tracking-widest">AI Profile Audit</h3>
                         </div>
 

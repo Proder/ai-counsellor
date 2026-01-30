@@ -59,10 +59,10 @@ export default function ShortlistPage() {
 
     return (
         <div className="max-w-5xl mx-auto space-y-10 pb-20">
-            <header className="flex justify-between items-end">
+            <header className="flex justify-between items-end mt-6 md:mt-0">
                 <div>
                     <h1 className="text-4xl font-black text-[#25343F]">Decision Pipeline</h1>
-                    <p className="text-[#BFC9D1] font-bold text-lg mt-2">Finalize your target institution to start the application phase.</p>
+                    <p className="text-[#25343F]/70 font-bold text-lg mt-2">Finalize your target institution to start the application phase.</p>
                 </div>
                 <div className="hidden md:flex bg-[#FF9B51]/10 border-2 border-[#FF9B51]/20 p-4 rounded-2xl items-center gap-3">
                     <Lock className="w-5 h-5 text-[#FF9B51]" />

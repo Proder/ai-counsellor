@@ -84,3 +84,16 @@ body {
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
   background: var(--primary);
 }
+
+@keyframes infinite-scroll {
+  from { transform: translateX(0); }
+  to { transform: translateX(-33.333%); }
+}
+
+.animate-infinite-scroll {
+  animation: infinite-scroll 40s linear infinite;
+}
+
+.animate-infinite-scroll:hover {
+  animation-play-state: paused;
+}
