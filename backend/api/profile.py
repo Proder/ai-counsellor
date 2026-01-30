@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from models import models, database
+from services.task_service import sync_stage_tasks
 from typing import Optional, List, Dict
 
 router = APIRouter()
@@ -22,6 +23,7 @@ class ProfileUpdate(BaseModel):
     exam_scores: Optional[Dict] = None
     sop_status: Optional[str] = None
     onboarding_completed: Optional[bool] = None
+    current_stage: Optional[str] = None
 
 class ReorderTasksRequest(BaseModel):
     task_ids: List[int]
@@ -50,13 +52,30 @@ def update_profile(user_id: int, profile_data: ProfileUpdate, db: Session = Depe
     
     db.commit()
     db.refresh(profile)
+    
+    # Sync tasks for the new stage
+    sync_stage_tasks(user_id, profile.current_stage, db)
+    
     return profile
 
 @router.get("/{user_id}/tasks")
 def get_tasks(user_id: int, db: Session = Depends(database.get_db)):
-    # Sort by position, then by creation date as fallback
-    tasks = db.query(models.Task).filter(models.Task.user_id == user_id).order_by(models.Task.position.asc(), models.Task.created_at.desc()).all()
-    return tasks
+    # First sync tasks to ensure they match current stage
+    profile = db.query(models.Profile).filter(models.Profile.user_id == user_id).first()
+    if profile:
+        sync_stage_tasks(user_id, profile.current_stage, db)
+        
+    # Sort: Pending first, then by position
+    tasks = db.query(models.Task).filter(models.Task.user_id == user_id).order_by(
+        models.Task.status.desc(), # 'Pending' > 'Completed' alphabetically, but we need custom or just rely on frontend
+        models.Task.position.asc(), 
+        models.Task.created_at.desc()
+    ).all()
+    
+    # Simple manual sort to ensure Pending is always first regardless of case/alphabet
+    pending = [t for t in tasks if t.status == "Pending"]
+    completed = [t for t in tasks if t.status == "Completed"]
+    return pending + completed
 
 @router.put("/tasks/reorder")
 def reorder_tasks(req: ReorderTasksRequest, db: Session = Depends(database.get_db)):

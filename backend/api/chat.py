@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 from services.ai_service import get_counsellor_response, parse_actions
+from services.task_service import sync_stage_tasks
 from sqlalchemy.orm import Session, joinedload
 from models import database, models
 
@@ -44,7 +45,15 @@ async def chat_with_counsellor(request: ChatRequest, db: Session = Depends(datab
     # 2. Build explicit context string
     context = ""
     if profile:
-        context += f"STUDENT PROFILE:\n- Name: {profile.full_name}\n- Target: {profile.target_degree} in {profile.target_field}\n- Current Stage: {profile.current_stage}\n"
+        context += f"STUDENT PROFILE:\n"
+        context += f"- Name: {profile.full_name}\n"
+        context += f"- Current Education: {profile.current_education_level} in {profile.degree_major}\n"
+        context += f"- Academic Performance: GPA {profile.gpa if profile.gpa else 'Not Provided'}\n"
+        context += f"- Standardized Tests: {json.dumps(profile.exam_scores) if profile.exam_scores else 'None'}\n"
+        context += f"- Target Goal: {profile.target_degree} in {profile.target_field} ({profile.target_intake_year})\n"
+        context += f"- Preference: {', '.join(profile.preferred_countries) if profile.preferred_countries else 'Any'}\n"
+        context += f"- Finance: Budget {profile.budget_range} ({profile.funding_plan})\n"
+        context += f"- Current Milestone: {profile.current_stage}\n"
     
     if shortlist_with_names:
         unis = [f"{s['name']} ({'LOCKED & FINALIZED' if s['is_locked'] else 'Shortlisted'})" for s in shortlist_with_names]
@@ -66,6 +75,7 @@ async def chat_with_counsellor(request: ChatRequest, db: Session = Depends(datab
     for action in actions:
         if action["type"] == "shortlist":
             uni_name = action["university"]
+            category = action.get("category", "Target")
             uni = db.query(models.University).filter(models.University.name == uni_name).first()
             if not uni:
                 uni = models.University(name=uni_name, country="USA", tuition_fee="Unknown", acceptance_rate=0.0)
@@ -78,9 +88,13 @@ async def chat_with_counsellor(request: ChatRequest, db: Session = Depends(datab
                 models.Shortlist.university_id == uni.id
             ).first()
             if not existing:
-                new_item = models.Shortlist(user_id=request.user_id, university_id=uni.id, category="Target")
+                new_item = models.Shortlist(user_id=request.user_id, university_id=uni.id, category=category)
                 db.add(new_item)
-                executed_actions.append(f"Shortlisted {uni_name}")
+                # Advance stage
+                if profile and (profile.current_stage == "Building Profile" or profile.current_stage == "Stage 2: Discovering Universities"):
+                    profile.current_stage = "Stage 3: Finalizing Universities"
+                    sync_stage_tasks(request.user_id, profile.current_stage, db)
+                executed_actions.append(f"Shortlisted {uni_name} to {category} list")
         
         elif action["type"] == "add_task":
             # Avoid duplicate tasks by title
@@ -89,6 +103,22 @@ async def chat_with_counsellor(request: ChatRequest, db: Session = Depends(datab
                 new_task = models.Task(user_id=request.user_id, title=action["title"], is_auto_generated=True)
                 db.add(new_task)
                 executed_actions.append(f"Added task: {action['title']}")
+        
+        elif action["type"] == "lock":
+            uni_name = action["university"]
+            uni = db.query(models.University).filter(models.University.name == uni_name).first()
+            if uni:
+                shortlist_item = db.query(models.Shortlist).filter(
+                    models.Shortlist.user_id == request.user_id,
+                    models.Shortlist.university_id == uni.id
+                ).first()
+                if shortlist_item and not shortlist_item.is_locked:
+                    shortlist_item.is_locked = True
+                    # Update profile stage to Applications if not already
+                    if profile and profile.current_stage != "Stage 4: Preparing Applications":
+                        profile.current_stage = "Stage 4: Preparing Applications"
+                        sync_stage_tasks(request.user_id, profile.current_stage, db)
+                    executed_actions.append(f"Locked {uni_name} - Welcome to the Application phase!")
     
     # Clean up the [ACTION] tags
     import re

@@ -1,12 +1,13 @@
 from fastapi import APIRouter, Depends
 from services.university_service import search_universities
+from services.task_service import sync_stage_tasks
 from models import database, models
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
 
 router = APIRouter()
 
-@router.get("/")
+@router.get("")
 async def get_universities(query: str = "", db: Session = Depends(database.get_db)):
     # In a real app we might cache or store in DB first
     results = search_universities(query)
@@ -33,6 +34,13 @@ def add_to_shortlist(req: ShortlistRequest, db: Session = Depends(database.get_d
     
     item = models.Shortlist(user_id=req.user_id, university_id=uni.id, category=req.category)
     db.add(item)
+    
+    # Advance stage to Stage 3 if currently at Stage 2
+    profile = db.query(models.Profile).filter(models.Profile.user_id == req.user_id).first()
+    if profile and (profile.current_stage == "Building Profile" or profile.current_stage == "Stage 2: Discovering Universities"):
+        profile.current_stage = "Stage 3: Finalizing Universities"
+        sync_stage_tasks(req.user_id, profile.current_stage, db)
+        
     db.commit()
     return {"message": "Shortlisted"}
 
@@ -66,5 +74,17 @@ def lock_university(shortlist_id: int, db: Session = Depends(database.get_db)):
         user = db.query(models.Profile).filter(models.Profile.user_id == item.user_id).first()
         if user:
             user.current_stage = "Stage 4: Preparing Applications"
+            sync_stage_tasks(item.user_id, user.current_stage, db)
         db.commit()
     return {"message": "Locked"}
+
+@router.post("/unlock/{shortlist_id}")
+def unlock_university(shortlist_id: int, db: Session = Depends(database.get_db)):
+    item = db.query(models.Shortlist).filter(models.Shortlist.id == shortlist_id).first()
+    if item:
+        item.is_locked = False
+        user = db.query(models.Profile).filter(models.Profile.user_id == item.user_id).first()
+        if user:
+            user.current_stage = "Stage 3: Finalizing Universities"
+        db.commit()
+    return {"message": "Unlocked"}
