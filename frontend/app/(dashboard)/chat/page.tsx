@@ -1,13 +1,13 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/Button";
 import { Send, Bot, User, Zap, Sparkles, ChevronRight, Mic, FileUp, Info } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 
-export default function ChatPage() {
+function ChatContent() {
     const searchParams = useSearchParams();
     const mode = searchParams.get("mode");
     const [messages, setMessages] = useState<{ role: "assistant" | "user"; content: string; isAction?: boolean }[]>([]);
@@ -210,5 +210,24 @@ export default function ChatPage() {
                 </div>
             </div>
         </div>
+    );
+}
+
+export default function ChatPage() {
+    return (
+        <Suspense fallback={
+            <div className="flex flex-col h-[calc(100vh-140px)] md:h-[calc(100vh-120px)] bg-white rounded-2xl md:rounded-[2.5rem] shadow-2xl border border-[#BFC9D1]/20 overflow-hidden items-center justify-center">
+                <div className="flex gap-3 md:gap-4 items-center">
+                    <div className="hidden sm:flex w-8 h-8 md:w-10 md:h-10 rounded-full bg-[#EAEFEF] items-center justify-center text-[#25343F] border border-[#BFC9D1]/20">
+                        <Bot className="w-4 h-4 md:w-5 md:h-5 animate-bounce" />
+                    </div>
+                    <div className="bg-[#EAEFEF]/50 text-[#BFC9D1] px-5 py-2.5 rounded-xl font-black text-[9px] md:text-[10px] uppercase tracking-widest animate-pulse border border-[#BFC9D1]/10">
+                        Loading Chat...
+                    </div>
+                </div>
+            </div>
+        }>
+            <ChatContent />
+        </Suspense>
     );
 }
