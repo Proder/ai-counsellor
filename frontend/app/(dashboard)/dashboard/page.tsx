@@ -20,21 +20,18 @@ export default function DashboardPage() {
     ];
 
     useEffect(() => {
-        const userId = localStorage.getItem("user_id");
-        if (!userId) {
-            router.push("/login");
-            return;
-        }
-
         const fetchData = async () => {
+            const token = localStorage.getItem("access_token");
+            if (!token) return router.push("/login");
+
             try {
-                const [profRes, taskRes] = await Promise.all([
-                    fetch(`/api/profile/${userId}`),
-                    fetch(`/api/profile/${userId}/tasks`)
+                const [profileRes, tasksRes] = await Promise.all([
+                    fetch(`/api/profile/me`, { headers: { "Authorization": `Bearer ${token}` } }),
+                    fetch(`/api/profile/tasks`, { headers: { "Authorization": `Bearer ${token}` } })
                 ]);
 
-                if (!profRes.ok) throw new Error("Failed to load");
-                const profData = await profRes.json();
+                if (!profileRes.ok) throw new Error("Failed to load profile");
+                const profData = await profileRes.json();
                 setProfile(profData);
 
                 if (!profData.onboarding_completed) {
@@ -42,7 +39,8 @@ export default function DashboardPage() {
                     return;
                 }
 
-                const taskData = await taskRes.json();
+                if (!tasksRes.ok) throw new Error("Failed to load tasks");
+                const taskData = await tasksRes.json();
                 // Sort: Pending (top) vs Completed (bottom)
                 setTasks(taskData.sort((a: any, b: any) => {
                     if (a.status === "Pending" && b.status === "Completed") return -1;
@@ -61,7 +59,11 @@ export default function DashboardPage() {
     }, [router]);
 
     const handleToggleTask = async (taskId: number) => {
-        const res = await fetch(`/api/profile/tasks/${taskId}/toggle`, { method: "PUT" });
+        const token = localStorage.getItem("access_token");
+        const res = await fetch(`/api/profile/tasks/${taskId}/toggle`, {
+            method: "PUT",
+            headers: { "Authorization": `Bearer ${token}` }
+        });
         if (res.ok) {
             const data = await res.json();
             setTasks(tasks.map(t => t.id === taskId ? { ...t, status: data.new_status } : t));
@@ -77,10 +79,14 @@ export default function DashboardPage() {
         setTasks(newOrder);
         // Persist to backend
         try {
+            const token = localStorage.getItem("access_token");
             await fetch("/api/profile/tasks/reorder", {
                 method: "PUT",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ task_ids: newOrder.map(t => t.id) })
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${token}`
+                },
+                body: JSON.stringify({ task_ids: newOrder.map(t => t.id) }),
             });
         } catch (e) {
             console.error("Reorder failed", e);

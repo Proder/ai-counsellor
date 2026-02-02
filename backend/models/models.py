@@ -94,7 +94,7 @@ class Shortlist(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
     user = relationship("User", back_populates="shortlist")
-    # university = relationship("University") # Optional relationship if needed
+    university = relationship("University")
 
 class Task(Base):
     __tablename__ = "tasks"

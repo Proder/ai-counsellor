@@ -13,7 +13,10 @@ export default function ShortlistPage() {
     const fetchShortlist = async () => {
         const userId = localStorage.getItem("user_id");
         if (!userId) return;
-        const res = await fetch(`/api/universities/shortlist/${userId}`);
+        const token = localStorage.getItem("access_token");
+        const res = await fetch(`/api/universities/shortlist`, {
+            headers: { "Authorization": `Bearer ${token}` }
+        });
         const data = await res.json();
         setItems(data);
         setLoading(false);
@@ -24,13 +27,21 @@ export default function ShortlistPage() {
     }, []);
 
     const executeLock = async (id: number) => {
-        await fetch(`/api/universities/lock/${id}`, { method: "POST" });
+        const token = localStorage.getItem("access_token");
+        await fetch(`/api/universities/lock/${id}`, {
+            method: "POST",
+            headers: { "Authorization": `Bearer ${token}` }
+        });
         toast.success("University locked! Application guide unlocked.");
         fetchShortlist();
     };
 
     const executeUnlock = async (id: number) => {
-        await fetch(`/api/universities/unlock/${id}`, { method: "POST" });
+        const token = localStorage.getItem("access_token");
+        await fetch(`/api/universities/unlock/${id}`, {
+            method: "POST",
+            headers: { "Authorization": `Bearer ${token}` }
+        });
         toast.info("Admission track reset. You can now explore other institutions.");
         fetchShortlist();
     };

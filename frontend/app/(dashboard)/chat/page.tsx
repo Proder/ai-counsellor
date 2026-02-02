@@ -21,7 +21,10 @@ function ChatContent() {
             if (!userId) return;
 
             try {
-                const res = await fetch(`/api/chat/history/${userId}`);
+                const token = localStorage.getItem("access_token");
+                const res = await fetch(`/api/chat/history`, {
+                    headers: { "Authorization": `Bearer ${token}` }
+                });
                 const data = await res.json();
                 if (data.length > 0) {
                     setMessages(data.map((m: any) => ({
@@ -59,13 +62,17 @@ function ChatContent() {
 
         try {
             const userId = localStorage.getItem("user_id");
+            const token = localStorage.getItem("access_token");
             const res = await fetch("/api/chat", {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ user_id: parseInt(userId || "0"), message: msgToSend }),
-            });
-
-            if (!res.ok) throw new Error("Network error");
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    message: input
+                }),
+            }); if (!res.ok) throw new Error("Network error");
 
             const data = await res.json();
             setMessages(prev => [...prev, { role: "assistant", content: data.response }]);

@@ -14,10 +14,15 @@ export default function ApplicationsPage() {
     const [completedDocs, setCompletedDocs] = useState<Record<number, string[]>>({});
 
     useEffect(() => {
-        const userId = localStorage.getItem("user_id");
-        if (!userId) return;
+        const token = localStorage.getItem("access_token");
+        if (!token) {
+            setLoading(false);
+            return;
+        }
 
-        fetch(`/api/universities/shortlist/${userId}`)
+        fetch(`/api/universities/shortlist`, {
+            headers: { "Authorization": `Bearer ${token}` }
+        })
             .then(res => res.json())
             .then(data => {
                 const locked = data.filter((item: any) => item.is_locked);

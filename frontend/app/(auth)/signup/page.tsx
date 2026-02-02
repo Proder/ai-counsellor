@@ -32,7 +32,10 @@ export default function Signup() {
             }
 
             const data = await res.json();
-            localStorage.setItem("user_id", data.user_id);
+            // Store token for immediate auto-login
+            localStorage.setItem("access_token", data.access_token);
+            if (data.user_id) localStorage.setItem("user_id", data.user_id);
+
             router.push("/onboarding");
         } catch (err: any) {
             setError(err.message);

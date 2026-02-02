@@ -20,7 +20,10 @@ export default function UniversitiesPage() {
         setLoading(true);
         setSearched(true);
         try {
-            const res = await fetch(`/api/universities/?query=${query}`);
+            const token = localStorage.getItem("access_token");
+            const res = await fetch(`/api/universities/?query=${query}`, {
+                headers: { "Authorization": `Bearer ${token}` }
+            });
             const data = await res.json();
             setResults(data.results || []);
         } catch (e) {
@@ -34,7 +37,10 @@ export default function UniversitiesPage() {
         setLoading(true);
         try {
             // In a real app, user_id would help fetch specific profile
-            const res = await fetch(`/api/universities/?recommend=true`);
+            const token = localStorage.getItem("access_token");
+            const res = await fetch(`/api/universities/?recommend=true`, {
+                headers: { "Authorization": `Bearer ${token}` }
+            });
             const data = await res.json();
             setRecommendations(data.recommendations || {});
         } catch (e) {
@@ -52,19 +58,21 @@ export default function UniversitiesPage() {
         }
     }, [view]);
 
-    const handleShortlist = async (uni: any) => {
+    const handleShortlist = async (uni: any, category?: string) => {
         const userId = localStorage.getItem("user_id");
         if (!userId) return;
 
         try {
+            const token = localStorage.getItem("access_token");
             const res = await fetch("/api/universities/shortlist", {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${token}`
+                },
                 body: JSON.stringify({
-                    user_id: parseInt(userId),
-                    university_id: uni.id,
                     university_name: uni["school.name"],
-                    category: "Target" // Default to Target for prototype
+                    category: category || "Target" // Default to Target if not provided
                 }),
             });
             if (res.ok) {

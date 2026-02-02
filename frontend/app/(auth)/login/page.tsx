@@ -27,11 +27,16 @@ export default function Login() {
             });
 
             if (!res.ok) {
-                throw new Error("Invalid credentials");
+                const errorData = await res.json();
+                throw new Error(errorData.detail || "Invalid credentials");
             }
 
             const data = await res.json();
-            localStorage.setItem("user_id", data.user_id);
+            // Store the JWT token securely
+            localStorage.setItem("access_token", data.access_token);
+            // We can still store user_id if needed, but token is primary
+            if (data.user_id) localStorage.setItem("user_id", data.user_id);
+
             router.push("/dashboard");
         } catch (err: any) {
             setError(err.message);

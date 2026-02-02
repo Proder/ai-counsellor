@@ -49,24 +49,35 @@ export default function Onboarding() {
     const handleSubmit = async () => {
         setLoading(true);
         try {
-            const userId = localStorage.getItem("user_id");
+            const userId = localStorage.getItem("user_id"); // Still check for userId for redirection logic
             if (!userId) {
                 router.push("/login");
                 return;
             }
 
-            const res = await fetch(`/api/profile/${userId}`, {
+            const token = localStorage.getItem("access_token");
+            if (!token) {
+                toast.error("Authentication token not found. Please log in again.");
+                router.push("/login");
+                return;
+            }
+
+            const payload = {
+                ...formData,
+                graduation_year: parseInt(formData.graduation_year) || 0,
+                target_intake_year: parseInt(formData.target_intake_year) || 0,
+                gpa: parseFloat(formData.gpa) || 0,
+                onboarding_completed: true,
+                current_stage: "Stage 2: Discovering Universities"
+            };
+
+            const res = await fetch(`/api/profile/me`, {
                 method: "PUT",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    user_id: parseInt(userId),
-                    ...formData,
-                    graduation_year: parseInt(formData.graduation_year) || 0,
-                    target_intake_year: parseInt(formData.target_intake_year) || 0,
-                    gpa: parseFloat(formData.gpa) || 0,
-                    onboarding_completed: true,
-                    current_stage: "Stage 2: Discovering Universities"
-                }),
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${token}`
+                },
+                body: JSON.stringify(payload),
             });
 
             if (res.ok) {

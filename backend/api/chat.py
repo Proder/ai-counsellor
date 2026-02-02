@@ -2,39 +2,53 @@ from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 from services.ai_service import get_counsellor_response, parse_actions
 from services.task_service import sync_stage_tasks
-from sqlalchemy.orm import Session, joinedload
+from sqlalchemy.orm import Session
 from models import database, models
+from utils.auth import get_current_user
+import json
 
 router = APIRouter()
 
 class ChatRequest(BaseModel):
-    user_id: int
     message: str
 
-@router.get("/history/{user_id}")
-def get_chat_history(user_id: int, db: Session = Depends(database.get_db)):
-    messages = db.query(models.ChatMessage).filter(models.ChatMessage.user_id == user_id).order_by(models.ChatMessage.created_at.asc()).all()
+@router.get("/history")
+def get_chat_history(current_user: models.User = Depends(get_current_user), db: Session = Depends(database.get_db)):
+    messages = db.query(models.ChatMessage).filter(models.ChatMessage.user_id == current_user.id).order_by(models.ChatMessage.created_at.asc()).all()
     return messages
 
 @router.post("")
-async def chat_with_counsellor(request: ChatRequest, db: Session = Depends(database.get_db)):
+async def chat_with_counsellor(request: ChatRequest, current_user: models.User = Depends(get_current_user), db: Session = Depends(database.get_db)):
     # 1. Fetch user data for deep context with relationships
-    profile = db.query(models.Profile).filter(models.Profile.user_id == request.user_id).first()
+    # Optimization: Use joinedload if relationships were configured for eager loading, or just fetch as is but efficiently
+    profile = db.query(models.Profile).filter(models.Profile.user_id == current_user.id).first()
+    
+    # Validation: Ensure profile exists
+    if not profile:
+        # Auto-create if missing (unlikely but safe)
+        profile = models.Profile(user_id=current_user.id)
+        db.add(profile)
+        db.commit()
     
     # Fetch shortlist and include university data
-    shortlist_items = db.query(models.Shortlist).filter(models.Shortlist.user_id == request.user_id).all()
+    # Optimization: Joining University table to avoid N+1
     
-    # Get university names manually since relationship might not be fully configured in models.py
+    shortlist_data = (
+        db.query(models.Shortlist, models.University)
+        .join(models.University, models.Shortlist.university_id == models.University.id)
+        .filter(models.Shortlist.user_id == current_user.id)
+        .all()
+    )
+    
     shortlist_with_names = []
-    for item in shortlist_items:
-        uni = db.query(models.University).filter(models.University.id == item.university_id).first()
+    for item, uni in shortlist_data:
         shortlist_with_names.append({
-            "name": uni.name if uni else "Unknown University",
+            "name": uni.name,
             "is_locked": item.is_locked
         })
 
-    tasks = db.query(models.Task).filter(models.Task.user_id == request.user_id).all()
-    history_mds = db.query(models.ChatMessage).filter(models.ChatMessage.user_id == request.user_id).order_by(models.ChatMessage.created_at.desc()).limit(15).all()
+    tasks = db.query(models.Task).filter(models.Task.user_id == current_user.id).all()
+    history_mds = db.query(models.ChatMessage).filter(models.ChatMessage.user_id == current_user.id).order_by(models.ChatMessage.created_at.desc()).limit(15).all()
     
     # Format history for LLM (older first)
     history = []
@@ -64,7 +78,7 @@ async def chat_with_counsellor(request: ChatRequest, db: Session = Depends(datab
         context += f"\nACTIVE ADMISSION TASKS:\n- " + "\n- ".join(task_list) + "\n"
 
     # 3. Save user message to DB
-    user_msg_db = models.ChatMessage(user_id=request.user_id, role="user", text=request.message)
+    user_msg_db = models.ChatMessage(user_id=current_user.id, role="user", text=request.message)
     db.add(user_msg_db)
     
     # 4. Get AI response with full history AND deep state context
@@ -84,23 +98,23 @@ async def chat_with_counsellor(request: ChatRequest, db: Session = Depends(datab
                 db.refresh(uni)
             
             existing = db.query(models.Shortlist).filter(
-                models.Shortlist.user_id == request.user_id,
+                models.Shortlist.user_id == current_user.id,
                 models.Shortlist.university_id == uni.id
             ).first()
             if not existing:
-                new_item = models.Shortlist(user_id=request.user_id, university_id=uni.id, category=category)
+                new_item = models.Shortlist(user_id=current_user.id, university_id=uni.id, category=category)
                 db.add(new_item)
                 # Advance stage
                 if profile and (profile.current_stage == "Building Profile" or profile.current_stage == "Stage 2: Discovering Universities"):
                     profile.current_stage = "Stage 3: Finalizing Universities"
-                    sync_stage_tasks(request.user_id, profile.current_stage, db)
+                    sync_stage_tasks(current_user.id, profile.current_stage, db)
                 executed_actions.append(f"Shortlisted {uni_name} to {category} list")
         
         elif action["type"] == "add_task":
             # Avoid duplicate tasks by title
             existing_task = any(t.title.lower() == action["title"].lower() for t in tasks)
             if not existing_task:
-                new_task = models.Task(user_id=request.user_id, title=action["title"], is_auto_generated=True)
+                new_task = models.Task(user_id=current_user.id, title=action["title"], is_auto_generated=True)
                 db.add(new_task)
                 executed_actions.append(f"Added task: {action['title']}")
         
@@ -109,7 +123,7 @@ async def chat_with_counsellor(request: ChatRequest, db: Session = Depends(datab
             uni = db.query(models.University).filter(models.University.name == uni_name).first()
             if uni:
                 shortlist_item = db.query(models.Shortlist).filter(
-                    models.Shortlist.user_id == request.user_id,
+                    models.Shortlist.user_id == current_user.id,
                     models.Shortlist.university_id == uni.id
                 ).first()
                 if shortlist_item and not shortlist_item.is_locked:
@@ -117,7 +131,7 @@ async def chat_with_counsellor(request: ChatRequest, db: Session = Depends(datab
                     # Update profile stage to Applications if not already
                     if profile and profile.current_stage != "Stage 4: Preparing Applications":
                         profile.current_stage = "Stage 4: Preparing Applications"
-                        sync_stage_tasks(request.user_id, profile.current_stage, db)
+                        sync_stage_tasks(current_user.id, profile.current_stage, db)
                     executed_actions.append(f"Locked {uni_name} - Welcome to the Application phase!")
     
     # Clean up the [ACTION] tags
@@ -125,11 +139,11 @@ async def chat_with_counsellor(request: ChatRequest, db: Session = Depends(datab
     clean_text = re.sub(r'\[ACTION:.*?\]', '', response_text, flags=re.DOTALL).strip()
     
     # 5. Save bot response and actions to DB
-    bot_msg_db = models.ChatMessage(user_id=request.user_id, role="bot", text=clean_text)
+    bot_msg_db = models.ChatMessage(user_id=current_user.id, role="bot", text=clean_text)
     db.add(bot_msg_db)
     
     for action_text in executed_actions:
-        action_msg_db = models.ChatMessage(user_id=request.user_id, role="bot", text=action_text, is_action=True)
+        action_msg_db = models.ChatMessage(user_id=current_user.id, role="bot", text=action_text, is_action=True)
         db.add(action_msg_db)
         
     db.commit()

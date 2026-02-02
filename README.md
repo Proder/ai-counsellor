@@ -30,6 +30,7 @@ A dual-engine reasoning system designed for reliability:
 1.  **Primary**: **Groq (Llama 3.3 70B)** - Ultra-low latency responses for conversational fluency.
 2.  **Fallback**: **Google Gemini 1.5 Flash** - Handles complex reasoning and acts as a fail-safe if rate limits are hit.
 3.  **Agentic Capabilities**: The AI isn't just a chatbot—it has tools to **read your profile**, **shortlist universities**, **add tasks**, and **lock commitments** directly in your database.
+4.  **Security Core**: A robust JWT-based authentication system ensures that user data is isolated. All API endpoints use secure dependency injection to strictly validate ownership before allowing access.
 
 ---
 

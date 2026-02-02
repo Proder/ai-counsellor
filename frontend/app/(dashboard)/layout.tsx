@@ -16,17 +16,22 @@ export default function DashboardLayout({
     const pathname = usePathname();
 
     useEffect(() => {
-        const userId = localStorage.getItem("user_id");
-        if (!userId) {
+        const token = localStorage.getItem("access_token");
+        if (!token) {
             window.location.href = "/login";
             return;
         }
 
-        fetch(`/api/profile/${userId}`)
-            .then(res => res.json())
+        fetch(`/api/profile/me`, {
+            headers: { "Authorization": `Bearer ${token}` }
+        })
+            .then(res => {
+                if (res.status === 401) window.location.href = "/login";
+                return res.json();
+            })
             .then(data => {
                 setProfile(data);
-                if (!data.onboarding_completed) {
+                if (data && !data.onboarding_completed) {
                     window.location.href = "/onboarding";
                 }
             });

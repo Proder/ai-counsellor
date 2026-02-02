@@ -13,14 +13,26 @@ export default function ProfilePage() {
     const [formData, setFormData] = useState<any>(null);
 
     useEffect(() => {
-        const userId = localStorage.getItem("user_id");
-        if (!userId) {
+        const token = localStorage.getItem("access_token");
+        // If no token, redirect to login
+        if (!token) {
             router.push("/login");
             return;
         }
 
-        fetch(`/api/profile/${userId}`)
-            .then(res => res.json())
+        fetch(`/api/profile/me`, {
+            headers: { "Authorization": `Bearer ${token}` }
+        })
+            .then(res => {
+                if (!res.ok) {
+                    // If unauthorized, redirect to login
+                    if (res.status === 401) {
+                        router.push("/login");
+                    }
+                    throw new Error("Failed to fetch profile");
+                }
+                return res.json();
+            })
             .then(data => {
                 setFormData(data);
                 setLoading(false);
@@ -28,6 +40,7 @@ export default function ProfilePage() {
             .catch(err => {
                 console.error(err);
                 toast.error("Failed to load profile");
+                setLoading(false); // Ensure loading state is reset even on error
             });
     }, [router]);
 
@@ -38,17 +51,32 @@ export default function ProfilePage() {
     const handleSave = async () => {
         setSaving(true);
         try {
-            const userId = localStorage.getItem("user_id");
-            const res = await fetch(`/api/profile/${userId}`, {
+            const token = localStorage.getItem("access_token");
+            if (!token) {
+                toast.error("Authentication token missing. Please log in again.");
+                router.push("/login");
+                return;
+            }
+
+            const res = await fetch(`/api/profile/me`, {
                 method: "PUT",
-                headers: { "Content-Type": "application/json" },
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${token}`
+                },
                 body: JSON.stringify(formData),
             });
 
             if (res.ok) {
                 toast.success("Profile updated! Recommendations recalculated.");
             } else {
-                toast.error("Failed to update profile");
+                // Handle unauthorized case specifically for save
+                if (res.status === 401) {
+                    toast.error("Session expired. Please log in again.");
+                    router.push("/login");
+                } else {
+                    toast.error("Failed to update profile");
+                }
             }
         } catch (e) {
             toast.error("Error saving profile");
