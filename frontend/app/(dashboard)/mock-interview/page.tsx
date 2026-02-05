@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, Suspense } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Mic, MicOff, X, GraduationCap, Plane, Loader2, Save, ChevronRight } from 'lucide-react';
+import { Mic, MicOff, X, Loader2 } from 'lucide-react';
 import { useInterviewParams } from '@/hooks/useInterviewParams';
 import { useRouter, useSearchParams } from 'next/navigation';
 
@@ -13,7 +13,7 @@ interface Message {
     text: string;
 }
 
-export default function MockInterviewPage() {
+function MockInterviewContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const {
@@ -62,7 +62,7 @@ export default function MockInterviewPage() {
                 console.error("Failed to fetch status", err);
                 setLoading(false);
             });
-    }, [searchParams]); // Added dependency
+    }, [searchParams]);
 
     // Timer Effect
     useEffect(() => {
@@ -82,7 +82,6 @@ export default function MockInterviewPage() {
     }, [mode, loading]);
 
     // Handle Conversation Flow
-    // When listening stops and we have a transcript -> Send to API
     const hasProcessedTranscript = useRef(false);
 
     useEffect(() => {
@@ -98,7 +97,6 @@ export default function MockInterviewPage() {
     const handleSend = async (text: string) => {
         setProcessing(true);
 
-        // Add user message to history immediatly for UI
         const newHistory = [...history, { role: 'user', text } as Message];
         setHistory(newHistory);
 
@@ -112,7 +110,7 @@ export default function MockInterviewPage() {
                 body: JSON.stringify({
                     message: text + timeContext,
                     mode: mode,
-                    history: newHistory.slice(-10) // Keep context manageable
+                    history: newHistory.slice(-10)
                 })
             });
 
@@ -121,10 +119,7 @@ export default function MockInterviewPage() {
 
             setHistory(prev => [...prev, { role: 'model', text: aiResponse }]);
 
-            // Speak response
             speak(aiResponse, () => {
-                // Auto-resume listening after speaking finishes
-                // Only if we haven't exited
                 if (mode !== 'selection') {
                     startListening();
                 }
@@ -141,7 +136,6 @@ export default function MockInterviewPage() {
         setMode(selectedMode);
         setHistory([]);
 
-        // Initial Greeting
         let greeting = "";
         if (selectedMode === 'university') {
             const uniName = lockedUni || "your target university";
@@ -151,13 +145,11 @@ export default function MockInterviewPage() {
             greeting = `Good morning. Please step forward. I am the Visa Officer for ${country}. Can I see your passport?`;
         }
 
-        // Update history immediately so it shows up
         setHistory([{ role: 'model', text: greeting }]);
 
-        // Small delay to allow UI transition
         setTimeout(() => {
             speak(greeting, () => {
-                startListening(); // Start listening after greeting
+                startListening();
             });
         }, 1000);
         setElapsedSeconds(0);
@@ -167,7 +159,6 @@ export default function MockInterviewPage() {
         cancelSpeech();
         stopListening();
 
-        // Save Transcript
         const fullTranscript = history.map(m => `${m.role.toUpperCase()}: ${m.text}`).join('\n');
         if (fullTranscript) {
             await fetch('/api/interview/save', {
@@ -184,8 +175,6 @@ export default function MockInterviewPage() {
         router.push(targetPath);
     };
 
-    // Render Selection Screen - DEPRECATED / REMOVED
-    // Logic: If no mode, we redirect back or show error. 
     if (mode === 'selection') {
         return (
             <div className="min-h-screen bg-[#EAEFEF] flex items-center justify-center">
@@ -194,11 +183,8 @@ export default function MockInterviewPage() {
         );
     }
 
-    // Render Active Session (Immersive)
     return (
         <div className="fixed inset-0 z-50 bg-black text-white flex flex-col items-center justify-center overflow-hidden">
-
-            {/* Top Controls */}
             <div className="absolute top-8 left-8 right-8 flex justify-between items-center z-[60]">
                 {mode === 'visa' && (
                     <div className="flex items-center gap-3 bg-[#25343F]/80 backdrop-blur px-5 py-3 rounded-2xl border border-[#BFC9D1]/20">
@@ -217,14 +203,11 @@ export default function MockInterviewPage() {
                 </button>
             </div>
 
-            {/* Dynamic Status Text */}
             <div className="absolute top-24 uppercase tracking-[0.2em] text-sm text-zinc-500 animate-pulse">
                 {processing ? "Thinking..." : isSpeaking ? "Speaking" : isListening ? "Listening" : "Paused"}
             </div>
 
-            {/* Central Visualizer */}
             <div className="relative flex items-center justify-center">
-                {/* Core Sphere */}
                 <motion.div
                     animate={
                         processing ? { scale: [1, 0.9, 1], opacity: 0.8 } :
@@ -240,7 +223,6 @@ export default function MockInterviewPage() {
                         }`}
                 />
 
-                {/* Background Waves (Only when speaking/listening) */}
                 {(isSpeaking || isListening) && (
                     <>
                         <motion.div
@@ -259,7 +241,6 @@ export default function MockInterviewPage() {
                 )}
             </div>
 
-            {/* Subtitles / Interim Text */}
             <div className="absolute bottom-32 w-full max-w-2xl text-center px-6">
                 <AnimatePresence mode="wait">
                     {interimTranscript && (
@@ -285,7 +266,6 @@ export default function MockInterviewPage() {
                 </AnimatePresence>
             </div>
 
-            {/* Bottom Controls */}
             <div className="absolute bottom-10 flex gap-6 items-center">
                 <button
                     onClick={isListening ? stopListening : startListening}
@@ -302,7 +282,18 @@ export default function MockInterviewPage() {
                     </span>
                 )}
             </div>
-
         </div>
+    );
+}
+
+export default function MockInterviewPage() {
+    return (
+        <Suspense fallback={
+            <div className="min-h-screen bg-[#EAEFEF] flex items-center justify-center">
+                <Loader2 className="animate-spin w-10 h-10 text-[#FF9B51]" />
+            </div>
+        }>
+            <MockInterviewContent />
+        </Suspense>
     );
 }
