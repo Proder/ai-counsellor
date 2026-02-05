@@ -14,15 +14,7 @@ export default function ApplicationsPage() {
     const [completedDocs, setCompletedDocs] = useState<Record<number, string[]>>({});
 
     useEffect(() => {
-        const token = localStorage.getItem("access_token");
-        if (!token) {
-            setLoading(false);
-            return;
-        }
-
-        fetch(`/api/universities/shortlist`, {
-            headers: { "Authorization": `Bearer ${token}` }
-        })
+        fetch(`/api/universities/shortlist`)
             .then(res => res.json())
             .then(data => {
                 const locked = data.filter((item: any) => item.is_locked);

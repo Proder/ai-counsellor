@@ -13,16 +13,7 @@ export default function ProfilePage() {
     const [formData, setFormData] = useState<any>(null);
 
     useEffect(() => {
-        const token = localStorage.getItem("access_token");
-        // If no token, redirect to login
-        if (!token) {
-            router.push("/login");
-            return;
-        }
-
-        fetch(`/api/profile/me`, {
-            headers: { "Authorization": `Bearer ${token}` }
-        })
+        fetch(`/api/profile/me`)
             .then(res => {
                 if (!res.ok) {
                     // If unauthorized, redirect to login
@@ -51,18 +42,10 @@ export default function ProfilePage() {
     const handleSave = async () => {
         setSaving(true);
         try {
-            const token = localStorage.getItem("access_token");
-            if (!token) {
-                toast.error("Authentication token missing. Please log in again.");
-                router.push("/login");
-                return;
-            }
-
             const res = await fetch(`/api/profile/me`, {
                 method: "PUT",
                 headers: {
                     "Content-Type": "application/json",
-                    "Authorization": `Bearer ${token}`
                 },
                 body: JSON.stringify(formData),
             });

@@ -20,10 +20,7 @@ export default function UniversitiesPage() {
         setLoading(true);
         setSearched(true);
         try {
-            const token = localStorage.getItem("access_token");
-            const res = await fetch(`/api/universities/?query=${query}`, {
-                headers: { "Authorization": `Bearer ${token}` }
-            });
+            const res = await fetch(`/api/universities/?query=${query}`);
             const data = await res.json();
             setResults(data.results || []);
         } catch (e) {
@@ -37,10 +34,7 @@ export default function UniversitiesPage() {
         setLoading(true);
         try {
             // In a real app, user_id would help fetch specific profile
-            const token = localStorage.getItem("access_token");
-            const res = await fetch(`/api/universities/?recommend=true`, {
-                headers: { "Authorization": `Bearer ${token}` }
-            });
+            const res = await fetch(`/api/universities/?recommend=true`);
             const data = await res.json();
             setRecommendations(data.recommendations || {});
         } catch (e) {
@@ -63,12 +57,10 @@ export default function UniversitiesPage() {
         if (!userId) return;
 
         try {
-            const token = localStorage.getItem("access_token");
             const res = await fetch("/api/universities/shortlist", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
-                    "Authorization": `Bearer ${token}`
                 },
                 body: JSON.stringify({
                     university_name: uni["school.name"],

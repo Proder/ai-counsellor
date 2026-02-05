@@ -21,13 +21,10 @@ export default function DashboardPage() {
 
     useEffect(() => {
         const fetchData = async () => {
-            const token = localStorage.getItem("access_token");
-            if (!token) return router.push("/login");
-
             try {
                 const [profileRes, tasksRes] = await Promise.all([
-                    fetch(`/api/profile/me`, { headers: { "Authorization": `Bearer ${token}` } }),
-                    fetch(`/api/profile/tasks`, { headers: { "Authorization": `Bearer ${token}` } })
+                    fetch(`/api/profile/me`),
+                    fetch(`/api/profile/tasks`)
                 ]);
 
                 if (!profileRes.ok) throw new Error("Failed to load profile");
@@ -59,10 +56,8 @@ export default function DashboardPage() {
     }, [router]);
 
     const handleToggleTask = async (taskId: number) => {
-        const token = localStorage.getItem("access_token");
         const res = await fetch(`/api/profile/tasks/${taskId}/toggle`, {
             method: "PUT",
-            headers: { "Authorization": `Bearer ${token}` }
         });
         if (res.ok) {
             const data = await res.json();
@@ -79,12 +74,10 @@ export default function DashboardPage() {
         setTasks(newOrder);
         // Persist to backend
         try {
-            const token = localStorage.getItem("access_token");
             await fetch("/api/profile/tasks/reorder", {
                 method: "PUT",
                 headers: {
                     "Content-Type": "application/json",
-                    "Authorization": `Bearer ${token}`
                 },
                 body: JSON.stringify({ task_ids: newOrder.map(t => t.id) }),
             });

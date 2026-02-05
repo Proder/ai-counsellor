@@ -4,12 +4,17 @@ from models import models, database
 from api import chat, auth, profile, universities
 from dotenv import load_dotenv
 import os
+from slowapi import _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
+from utils.limiter import limiter
 
 load_dotenv()
 
 models.Base.metadata.create_all(bind=database.engine)
 
 app = FastAPI(title="AI Counsellor API")
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 # Configurable CORS origins for production
 allowed_origins = os.getenv("ALLOWED_ORIGINS", "http://localhost:3000").split(",")

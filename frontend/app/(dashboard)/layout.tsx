@@ -16,15 +16,7 @@ export default function DashboardLayout({
     const pathname = usePathname();
 
     useEffect(() => {
-        const token = localStorage.getItem("access_token");
-        if (!token) {
-            window.location.href = "/login";
-            return;
-        }
-
-        fetch(`/api/profile/me`, {
-            headers: { "Authorization": `Bearer ${token}` }
-        })
+        fetch(`/api/profile/me`)
             .then(res => {
                 if (res.status === 401) window.location.href = "/login";
                 return res.json();

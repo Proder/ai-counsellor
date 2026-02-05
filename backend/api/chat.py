@@ -1,10 +1,11 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Request
 from pydantic import BaseModel
 from services.ai_service import get_counsellor_response, parse_actions
 from services.task_service import sync_stage_tasks
 from sqlalchemy.orm import Session
 from models import database, models
 from utils.auth import get_current_user
+from utils.limiter import limiter
 import json
 
 router = APIRouter()
@@ -13,12 +14,16 @@ class ChatRequest(BaseModel):
     message: str
 
 @router.get("/history")
-def get_chat_history(current_user: models.User = Depends(get_current_user), db: Session = Depends(database.get_db)):
-    messages = db.query(models.ChatMessage).filter(models.ChatMessage.user_id == current_user.id).order_by(models.ChatMessage.created_at.asc()).all()
-    return messages
+@limiter.limit("20/minute")
+def get_chat_history(request: Request, current_user: models.User = Depends(get_current_user), db: Session = Depends(database.get_db)):
+    # Limit to last 50 messages to prevent unbounded growth issues in UI
+    messages = db.query(models.ChatMessage).filter(models.ChatMessage.user_id == current_user.id).order_by(models.ChatMessage.created_at.desc()).limit(50).all()
+    # Return in chronological order
+    return sorted(messages, key=lambda x: x.created_at)
 
 @router.post("")
-async def chat_with_counsellor(request: ChatRequest, current_user: models.User = Depends(get_current_user), db: Session = Depends(database.get_db)):
+@limiter.limit("10/minute")
+async def chat_with_counsellor(request: Request, request_body: ChatRequest, current_user: models.User = Depends(get_current_user), db: Session = Depends(database.get_db)):
     # 1. Fetch user data for deep context with relationships
     # Optimization: Use joinedload if relationships were configured for eager loading, or just fetch as is but efficiently
     profile = db.query(models.Profile).filter(models.Profile.user_id == current_user.id).first()
@@ -78,11 +83,11 @@ async def chat_with_counsellor(request: ChatRequest, current_user: models.User =
         context += f"\nACTIVE ADMISSION TASKS:\n- " + "\n- ".join(task_list) + "\n"
 
     # 3. Save user message to DB
-    user_msg_db = models.ChatMessage(user_id=current_user.id, role="user", text=request.message)
+    user_msg_db = models.ChatMessage(user_id=current_user.id, role="user", text=request_body.message)
     db.add(user_msg_db)
     
     # 4. Get AI response with full history AND deep state context
-    response_text = get_counsellor_response(context, request.message, history=history)
+    response_text = get_counsellor_response(context, request_body.message, history=history)
     actions = parse_actions(response_text)
     
     executed_actions = []

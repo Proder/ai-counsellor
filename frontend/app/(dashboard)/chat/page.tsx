@@ -21,10 +21,7 @@ function ChatContent() {
             if (!userId) return;
 
             try {
-                const token = localStorage.getItem("access_token");
-                const res = await fetch(`/api/chat/history`, {
-                    headers: { "Authorization": `Bearer ${token}` }
-                });
+                const res = await fetch(`/api/chat/history`);
                 const data = await res.json();
                 if (data.length > 0) {
                     setMessages(data.map((m: any) => ({
@@ -61,13 +58,10 @@ function ChatContent() {
         setLoading(true);
 
         try {
-            const userId = localStorage.getItem("user_id");
-            const token = localStorage.getItem("access_token");
             const res = await fetch("/api/chat", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
-                    "Authorization": `Bearer ${token}`
                 },
                 body: JSON.stringify({
                     message: input

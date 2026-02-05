@@ -55,13 +55,6 @@ export default function Onboarding() {
                 return;
             }
 
-            const token = localStorage.getItem("access_token");
-            if (!token) {
-                toast.error("Authentication token not found. Please log in again.");
-                router.push("/login");
-                return;
-            }
-
             const payload = {
                 ...formData,
                 graduation_year: parseInt(formData.graduation_year) || 0,
@@ -75,7 +68,6 @@ export default function Onboarding() {
                 method: "PUT",
                 headers: {
                     "Content-Type": "application/json",
-                    "Authorization": `Bearer ${token}`
                 },
                 body: JSON.stringify(payload),
             });
@@ -84,6 +76,7 @@ export default function Onboarding() {
                 toast.success("Profile saved successfully!");
                 router.push("/dashboard");
             } else {
+                if (res.status === 401) router.push("/login");
                 toast.error("Failed to save profile. Please try again.");
             }
         } catch (e) {

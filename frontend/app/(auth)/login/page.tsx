@@ -32,9 +32,7 @@ export default function Login() {
             }
 
             const data = await res.json();
-            // Store the JWT token securely
-            localStorage.setItem("access_token", data.access_token);
-            // We can still store user_id if needed, but token is primary
+            // Store user_id if needed for UI, but token is now in HttpOnly cookie
             if (data.user_id) localStorage.setItem("user_id", data.user_id);
 
             router.push("/dashboard");

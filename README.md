@@ -30,7 +30,10 @@ A dual-engine reasoning system designed for reliability:
 1.  **Primary**: **Groq (Llama 3.3 70B)** - Ultra-low latency responses for conversational fluency.
 2.  **Fallback**: **Google Gemini 1.5 Flash** - Handles complex reasoning and acts as a fail-safe if rate limits are hit.
 3.  **Agentic Capabilities**: The AI isn't just a chatbot—it has tools to **read your profile**, **shortlist universities**, **add tasks**, and **lock commitments** directly in your database.
-4.  **Security Core**: A robust JWT-based authentication system ensures that user data is isolated. All API endpoints use secure dependency injection to strictly validate ownership before allowing access.
+4.  **Security Core**: 
+    *   **Authentication**: Strictly **HttpOnly Cookie-based JWT** authentication. No tokens are exposed to client-side JavaScript (`localStorage`), eliminating XSS token theft vectors.
+    *   **Rate Limiting**: `Slowapi` integration protects critical endpoints (Auth: 5/min, Chat: 10/min) from abuse.
+    *   **Validation**: Secure dependency injection ensures strict ownership checks for all data access.
 
 ---
 
@@ -88,6 +91,8 @@ You need **Python 3.10+**, **Node.js 18+**, and the following API keys:
 *   `GROQ_API_KEY` (for fast AI)
 *   `GEMINI_API_KEY` (for robust fallback)
 *   `COLLEGE_SCORECARD_API_KEY` (for university data - optional, falls back to mock)
+*   `SECRET_KEY` (for secure session signing)
+*   `APP_ENV` (Set to `production` for secure cookie flags)
 
 ### 2. Quick Start
 We've provided a unified startup script that sets up virtual environments, installs dependencies, and launches both servers.
@@ -123,4 +128,4 @@ npm run dev
 - [ ] **Visa Interview Prep**: Voice-enabled AI mock interviews.
 
 ---
-*Built with ❤️ for the Future of Education.*
+*Built with ❤️ for the Future of Education by Proder.*

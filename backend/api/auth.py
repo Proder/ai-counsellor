@@ -1,10 +1,12 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Response, Request
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from models import models, database
 from passlib.context import CryptContext
-from utils.auth import create_access_token
+from utils.auth import create_access_token, ACCESS_TOKEN_EXPIRE_MINUTES
+from utils.limiter import limiter
 from datetime import timedelta
+import os
 
 router = APIRouter()
 # Switching to pbkdf2_sha256 to avoid the common bcrypt 72-byte limit error in newer environments
@@ -23,8 +25,12 @@ class Token(BaseModel):
     token_type: str
     user_id: int
 
+# Env check for secure cookies
+is_production = os.getenv("APP_ENV") == "production"
+
 @router.post("/signup")
-def signup(user: UserCreate, db: Session = Depends(database.get_db)):
+@limiter.limit("5/minute")
+def signup(request: Request, user: UserCreate, response: Response, db: Session = Depends(database.get_db)):
     db_user = db.query(models.User).filter(models.User.email == user.email).first()
     if db_user:
         raise HTTPException(status_code=400, detail="Email already registered")
@@ -43,6 +49,16 @@ def signup(user: UserCreate, db: Session = Depends(database.get_db)):
     # Create token for immediate login
     access_token = create_access_token(data={"sub": str(new_user.id)})
     
+    response.set_cookie(
+        key="access_token",
+        value=access_token,
+        httponly=True,
+        max_age=ACCESS_TOKEN_EXPIRE_MINUTES * 60,
+        expires=ACCESS_TOKEN_EXPIRE_MINUTES * 60,
+        samesite="lax",
+        secure=is_production
+    )
+
     return {
         "message": "User created", 
         "user_id": new_user.id,
@@ -51,7 +67,8 @@ def signup(user: UserCreate, db: Session = Depends(database.get_db)):
     }
 
 @router.post("/login", response_model=Token)
-def login(user: UserLogin, db: Session = Depends(database.get_db)):
+@limiter.limit("5/minute")
+def login(request: Request, user: UserLogin, response: Response, db: Session = Depends(database.get_db)):
     db_user = db.query(models.User).filter(models.User.email == user.email).first()
     if not db_user or not pwd_context.verify(user.password, db_user.password_hash):
         raise HTTPException(
@@ -63,6 +80,16 @@ def login(user: UserLogin, db: Session = Depends(database.get_db)):
     # Create Access Token
     access_token = create_access_token(data={"sub": str(db_user.id)})
     
+    response.set_cookie(
+        key="access_token",
+        value=access_token,
+        httponly=True,
+        max_age=ACCESS_TOKEN_EXPIRE_MINUTES * 60,
+        expires=ACCESS_TOKEN_EXPIRE_MINUTES * 60,
+        samesite="lax",
+        secure=is_production
+    )
+
     return {
         "access_token": access_token, 
         "token_type": "bearer",
