@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, School, MessageSquare, BookOpen, Settings, LogOut, List, GraduationCap, X } from "lucide-react";
+import { Home, School, MessageSquare, BookOpen, Settings, LogOut, List, GraduationCap, X, Plane } from "lucide-react";
 
 const LINKS = [
     { name: "Overview", href: "/dashboard", icon: Home },
@@ -10,6 +10,7 @@ const LINKS = [
     { name: "My Shortlist", href: "/shortlist", icon: List },
     { name: "AI Counsellor", href: "/chat", icon: MessageSquare },
     { name: "Applications", href: "/applications", icon: BookOpen },
+    { name: "Visa Interview", href: "/visa", icon: Plane },
     { name: "Profile", href: "/profile", icon: Settings },
 ];
 

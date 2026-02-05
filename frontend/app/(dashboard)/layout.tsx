@@ -18,15 +18,20 @@ export default function DashboardLayout({
     useEffect(() => {
         fetch(`/api/profile/me`)
             .then(res => {
-                if (res.status === 401) window.location.href = "/login";
+                if (res.status === 401) {
+                    window.location.href = "/login";
+                    return null;
+                }
                 return res.json();
             })
             .then(data => {
+                if (!data) return;
                 setProfile(data);
-                if (data && !data.onboarding_completed) {
+                if (!data.onboarding_completed && pathname !== "/onboarding") {
                     window.location.href = "/onboarding";
                 }
-            });
+            })
+            .catch(err => console.error("Profile fetch error:", err));
     }, [pathname]);
 
     // Hide floating button on the chat page itself

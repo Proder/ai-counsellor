@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Lock, CheckCircle, FileText, Calendar, GraduationCap, ChevronDown, ChevronUp } from "lucide-react";
+import { Lock, CheckCircle, FileText, Calendar, GraduationCap, ChevronDown, ChevronUp, Mic, ChevronRight, X } from "lucide-react";
 import Link from "next/link";
 
 export default function ApplicationsPage() {
@@ -12,6 +12,9 @@ export default function ApplicationsPage() {
 
     // Checklist state
     const [completedDocs, setCompletedDocs] = useState<Record<number, string[]>>({});
+
+    // History Toggle State
+    const [showTranscript, setShowTranscript] = useState<string | null>(null);
 
     useEffect(() => {
         fetch(`/api/universities/shortlist`)
@@ -163,6 +166,34 @@ export default function ApplicationsPage() {
 
                 <div className="bg-white p-6 md:p-10 rounded-2xl md:rounded-[2.5rem] border border-[#BFC9D1]/20 shadow-xl transition-all">
                     <h3 className="text-lg md:text-xl font-black text-[#25343F] mb-6 md:mb-8 flex items-center gap-3">
+                        <div className="p-2 bg-[#EAEFEF] rounded-lg md:rounded-xl text-[#FF9B51]"><Mic className="w-5 h-5 md:w-6 md:h-6" /></div>
+                        Interview Prep
+                    </h3>
+                    <p className="text-sm font-bold text-[#BFC9D1] mb-6">
+                        Practice your answers with AI-driven mock interviews tailored for {selectedUni?.university_name}.
+                    </p>
+                    <Link href="/mock-interview?mode=university">
+                        <button className="w-full py-4 bg-[#FF9B51] text-[#25343F] rounded-xl font-black text-xs md:text-sm hover:bg-[#ff8f3d] transition-all shadow-lg uppercase tracking-widest flex items-center justify-center gap-2 active:scale-[0.98]">
+                            <Mic className="w-4 h-4" />
+                            START MOCK INTERVIEW
+                        </button>
+                    </Link>
+
+                    {/* Interview History */}
+                    <div className="mt-8 pt-8 border-t border-[#BFC9D1]/20">
+                        <div className="flex items-center justify-between mb-4">
+                            <span className="text-xs font-black uppercase tracking-widest text-[#BFC9D1]">Previous Sessions</span>
+                        </div>
+
+                        {/* We need to fetch history here. Since this is a server/client hybrid, we'll assume we can fetch in useEffect. 
+                             Ideally refactor into a sub-component, but for speed we'll inline logic or add a small client fetch. 
+                         */}
+                        <InterviewHistoryList mode="university" />
+                    </div>
+                </div>
+
+                <div className="bg-white p-6 md:p-10 rounded-2xl md:rounded-[2.5rem] border border-[#BFC9D1]/20 shadow-xl transition-all">
+                    <h3 className="text-lg md:text-xl font-black text-[#25343F] mb-6 md:mb-8 flex items-center gap-3">
                         <div className="p-2 bg-[#EAEFEF] rounded-lg md:rounded-xl text-[#FF9B51]"><Calendar className="w-5 h-5 md:w-6 md:h-6" /></div>
                         Critical Deadlines
                     </h3>
@@ -190,5 +221,73 @@ export default function ApplicationsPage() {
                 </div>
             </div>
         </div>
+    );
+}
+
+function InterviewHistoryList({ mode }: { mode: string }) {
+    const [history, setHistory] = useState<any[]>([]);
+    const [transcript, setTranscript] = useState<any>(null);
+
+    useEffect(() => {
+        fetch(`/api/interview/history?mode=${mode}`)
+            .then(res => res.json())
+            .then(data => {
+                if (Array.isArray(data)) setHistory(data.slice(0, 3));
+            })
+            .catch(console.error);
+    }, [mode]);
+
+    if (history.length === 0) return <div className="text-xs text-[#BFC9D1] font-bold italic">No sessions recorded yet.</div>;
+
+    return (
+        <>
+            <div className="space-y-3">
+                {history.map((h: any) => (
+                    <div
+                        key={h.id}
+                        onClick={() => setTranscript(h)}
+                        className="p-3 bg-[#EAEFEF]/30 rounded-xl hover:bg-[#EAEFEF] cursor-pointer transition-all flex items-center justify-between group"
+                    >
+                        <div>
+                            <div className="text-[10px] font-black uppercase tracking-widest text-[#BFC9D1]">{new Date(h.date).toLocaleDateString()}</div>
+                            <div className="text-xs font-bold text-[#25343F] line-clamp-1">{h.transcript_preview}</div>
+                        </div>
+                        <ChevronRight className="w-4 h-4 text-[#BFC9D1] group-hover:text-[#FF9B51]" />
+                    </div>
+                ))}
+            </div>
+
+            {/* Simple Modal - REDESIGNED */}
+            {transcript && (
+                <div
+                    className="fixed inset-0 z-[100] bg-[#25343F]/80 backdrop-blur-md flex items-center justify-center p-4 transition-all"
+                    onClick={() => setTranscript(null)}
+                >
+                    <div
+                        className="bg-white w-full max-w-2xl max-h-[80vh] rounded-[2rem] overflow-hidden shadow-2xl flex flex-col border border-[#BFC9D1]/20 animate-in fade-in zoom-in-95 duration-200"
+                        onClick={e => e.stopPropagation()}
+                    >
+                        <div className="p-8 border-b border-[#EAEFEF] flex justify-between items-center bg-[#F8FAFA]">
+                            <div>
+                                <h3 className="font-black text-2xl text-[#25343F] tracking-tight">Session Transcript</h3>
+                                <p className="text-sm text-[#BFC9D1] font-bold mt-1 uppercase tracking-wide">
+                                    Recorded on {new Date(transcript.date).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })}
+                                </p>
+                            </div>
+                            <button
+                                onClick={() => setTranscript(null)}
+                                className="p-2 bg-[#EAEFEF] rounded-full hover:bg-red-50 text-[#BFC9D1] hover:text-red-500 transition-all"
+                            >
+                            {/* use cross button instead of chevron */}
+                            <X className="w-6 h-6" />
+                            </button>
+                        </div>
+                        <div className="p-8 overflow-y-auto whitespace-pre-wrap font-medium text-[#25343F]/80 leading-relaxed bg-white scrollbar-hide">
+                            {transcript.full_transcript}
+                        </div>
+                    </div>
+                </div>
+            )}
+        </>
     );
 }

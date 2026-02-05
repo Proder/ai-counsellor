@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from models import models, database
-from api import chat, auth, profile, universities
+from api import chat, auth, profile, universities, interview
 from dotenv import load_dotenv
 import os
 from slowapi import _rate_limit_exceeded_handler
@@ -31,6 +31,7 @@ app.include_router(chat.router, prefix="/api/chat", tags=["Chat"])
 app.include_router(auth.router, prefix="/api/auth", tags=["Auth"])
 app.include_router(profile.router, prefix="/api/profile", tags=["Profile"])
 app.include_router(universities.router, prefix="/api/universities", tags=["Universities"])
+app.include_router(interview.router, prefix="/api/interview", tags=["Interview"])
 
 @app.get("/")
 def read_root():

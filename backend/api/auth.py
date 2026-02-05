@@ -47,14 +47,16 @@ def signup(request: Request, user: UserCreate, response: Response, db: Session =
     db.commit()
     
     # Create token for immediate login
-    access_token = create_access_token(data={"sub": str(new_user.id)})
+    access_token = create_access_token(
+        data={"sub": str(new_user.id)},
+        expires_delta=timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    )
     
     response.set_cookie(
         key="access_token",
         value=access_token,
         httponly=True,
         max_age=ACCESS_TOKEN_EXPIRE_MINUTES * 60,
-        expires=ACCESS_TOKEN_EXPIRE_MINUTES * 60,
         samesite="lax",
         secure=is_production
     )
@@ -78,14 +80,16 @@ def login(request: Request, user: UserLogin, response: Response, db: Session = D
         )
     
     # Create Access Token
-    access_token = create_access_token(data={"sub": str(db_user.id)})
+    access_token = create_access_token(
+        data={"sub": str(db_user.id)},
+        expires_delta=timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    )
     
     response.set_cookie(
         key="access_token",
         value=access_token,
         httponly=True,
         max_age=ACCESS_TOKEN_EXPIRE_MINUTES * 60,
-        expires=ACCESS_TOKEN_EXPIRE_MINUTES * 60,
         samesite="lax",
         secure=is_production
     )

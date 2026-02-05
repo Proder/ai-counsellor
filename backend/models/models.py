@@ -15,6 +15,7 @@ class User(Base):
     shortlist = relationship("Shortlist", back_populates="user")
     tasks = relationship("Task", back_populates="user")
     messages = relationship("ChatMessage", back_populates="user")
+    interviews = relationship("Interview", back_populates="user")
 
 class ChatMessage(Base):
     __tablename__ = "chat_messages"
@@ -111,3 +112,17 @@ class Task(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     
     user = relationship("User", back_populates="tasks")
+
+class Interview(Base):
+    __tablename__ = "interviews"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"))
+    university_id = Column(Integer, ForeignKey("universities.id"), nullable=True) # If null, it's a generic or Visa interview
+    
+    interview_type = Column(String) # "university" or "visa"
+    transcript = Column(Text)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    user = relationship("User", back_populates="interviews")
+    university = relationship("University")

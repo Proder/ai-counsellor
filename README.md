@@ -58,7 +58,14 @@ A dual-engine reasoning system designed for reliability:
 *   **Live Checklists**: Interactive "Required Documents" lists that persist per university.
 *   **Deadlines**: Visual countdowns to critical dates (Early Action / Regular Decision).
 
-### 5. 💬 Agentic AI Chat
+### 5. 🎙️ AI Interview Suite (Voice Based)
+*   **University Mock Interviews**: Realistic admissions simulations tailored to your locked university's specific requirements.
+*   **Visa Consular Prep**: A high-pressure, **time-bound (5-minute)** simulation of a visa interview.
+*   **Dynamic Personas**: AI automatically adopts the relevant persona (e.g., "Consular Officer for Germany") based on your profile context and target country.
+*   **STT & TTS Integration**: Fully immersive experience using the Web Speech API for real-time speech-to-text and ultra-low latency text-to-speech.
+*   **Transcript Archiving**: Automatic storage and retrieval of session transcripts for review and improvement.
+
+### 6. 💬 Agentic AI Chat
 *   **Context-Rich**: The AI "sees" your entire profile—it knows your GPA, budget, and current shortlist without you repeating it.
 *   **Action-Oriented**: Ask it to "Shortlist NYU for me," and it will actually update your dashboard instantly.
 
@@ -125,7 +132,6 @@ npm run dev
 ## 🔮 Future Roadmap
 - [ ] **Document Analysis**: Upload your resume/SOP for AI grading.
 - [ ] **Alumni Connect**: Chat with AI personas of students from your target uni.
-- [ ] **Visa Interview Prep**: Voice-enabled AI mock interviews.
 
 ---
 *Built with ❤️ for the Future of Education by Proder.*
